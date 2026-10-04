@@ -81,44 +81,44 @@ const PublicIssues = () => {
     <div className="dashboard">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-          <Wrench size={28} color="#2c3e50" /> Public Campus Issues
+          <Wrench size={28} color="var(--text-primary)" /> Public Campus Issues
         </h2>
         {user?.role === 'student' && (
-          <Link to="/report-issue" className="btn-primary" style={{ textDecoration: 'none', padding: '0.5rem 1rem', background: '#3498db', color: 'white', borderRadius: '4px' }}>Report Issue</Link>
+          <Link to="/report-issue" className="btn-primary" style={{ textDecoration: 'none', padding: '0.5rem 1rem', background: 'var(--accent-primary)', color: 'var(--bg-surface)', borderRadius: '4px' }}>Report Issue</Link>
         )}
       </div>
       
-      <div className="status-card" style={{ padding: '1.5rem', marginBottom: '2rem', textAlign: 'left', background: '#f8f9fa' }}>
+      <div className="status-card" style={{ padding: '1.5rem', marginBottom: '2rem', textAlign: 'left', background: 'var(--bg-secondary)' }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ flex: '1 1 250px', position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', top: '10px', left: '10px', color: '#7f8c8d' }} />
+            <Search size={18} style={{ position: 'absolute', top: '10px', left: '10px', color: 'var(--text-secondary)' }} />
             <input 
               type="text" 
               placeholder="Search title, description, or location..." 
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="form-input"
-              style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }}
             />
           </div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: '2 1 400px' }}>
-            <select className="form-input" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}>
+            <select className="form-input" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select className="form-input" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}>
+            <select className="form-input" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
               {statuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select className="form-input" value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}>
+            <select className="form-input" value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
               {priorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-            <select className="form-input" value={sortParam} onChange={(e) => { setSortParam(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}>
+            <select className="form-input" value={sortParam} onChange={(e) => { setSortParam(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
               {sortOptions.map(opt => <option key={opt.value} value={opt.value}>Sort: {opt.label}</option>)}
             </select>
           </div>
         </div>
       </div>
 
-      {loading ? <p>Loading issues...</p> : error ? <p className="error-message" style={{ color: '#e74c3c' }}>{error}</p> : (
+      {loading ? <p>Loading issues...</p> : error ? <p className="error-message" style={{ color: 'var(--danger)' }}>{error}</p> : (
         <>
           <div style={{ display: 'grid', gap: '1rem' }}>
             {issues.length === 0 ? <div className="status-card"><p>No issues match your criteria.</p></div> : 
@@ -128,42 +128,55 @@ const PublicIssues = () => {
                 
                 return (
                   <Link to={`/issues/${issue._id}`} key={issue._id} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="status-card" style={{ textAlign: 'left', cursor: 'pointer', padding: '1.5rem', borderLeft: `4px solid ${isResolved ? '#27ae60' : issue.status === 'In Progress' ? '#f1c40f' : '#e67e22'}` }}>
+                    <div className="status-card" style={{ textAlign: 'left', cursor: 'pointer', padding: '1.5rem', borderLeft: `4px solid ${isResolved ? 'var(--success)' : issue.status === 'In Progress' ? 'var(--warning)' : 'var(--warning)'}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 style={{ margin: '0 0 0.5rem 0', color: '#2c3e50', fontSize: '1.2rem' }}>{issue.title}</h3>
+                        <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '1.2rem' }}>{issue.title}</h3>
                         <span style={{ 
                           fontWeight: 'bold', 
                           fontSize: '0.85rem',
                           padding: '0.2rem 0.6rem',
                           borderRadius: '12px',
-                          background: issue.status === 'Pending' ? '#fdf2e9' : isResolved ? '#e9f7ef' : '#fef9e7',
-                          color: issue.status === 'Pending' ? '#e67e22' : isResolved ? '#27ae60' : '#f39c12'
+                          background: issue.status === 'Pending' ? 'var(--bg-secondary)' : isResolved ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
+                          color: issue.status === 'Pending' ? 'var(--warning)' : isResolved ? 'var(--success)' : 'var(--warning)'
                         }}>{issue.status}</span>
                       </div>
+                      {user?.role === 'admin' && (
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '0.8rem',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '4px',
+                            background: issue.reporterType === 'staff' ? 'var(--info)' : 'var(--accent-primary)',
+                            color: 'var(--bg-surface)'
+                          }}>
+                            {issue.reporterType === 'staff' ? '🧑‍🏫 Reported by Staff' : '🎓 Reported by Student'}
+                          </span>
+                        </div>
+                      )}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.5rem', margin: '0.5rem 0' }}>
-                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#34495e' }}><strong>Category:</strong> {issue.category}</p>
-                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#34495e' }}><strong>Location:</strong> {issue.location}</p>
-                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#34495e' }}>
-                          <strong>Priority:</strong> <span style={{ color: issue.priority === 'Critical' ? '#c0392b' : issue.priority === 'High' ? '#e74c3c' : 'inherit' }}>{issue.priority} Priority</span>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}><strong>Category:</strong> {issue.category}</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}><strong>Location:</strong> {issue.location}</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                          <strong>Priority:</strong> <span style={{ color: issue.priority === 'Critical' ? 'var(--danger)' : issue.priority === 'High' ? 'var(--danger)' : 'inherit' }}>{issue.priority} Priority</span>
                         </p>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '0.8rem', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#34495e', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                             <Users size={16} /> {issue.affectedUsers} students affected
                           </span>
                           
                           {/* Support Mechanism */}
                           {user?.role === 'student' && !isResolved && (
                             hasSupported ? (
-                              <span style={{ fontSize: '0.85rem', color: '#27ae60', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 'bold' }}>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 'bold' }}>
                                 <CheckCircle size={14} /> You supported this issue
                               </span>
                             ) : (
                               <button 
                                 onClick={(e) => handleSupport(e, issue._id)} 
-                                style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem', background: '#ecf0f1', color: '#2c3e50', border: '1px solid #bdc3c7', borderRadius: '4px', cursor: 'pointer' }}
+                                style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer' }}
                               >
                                 Support this issue
                               </button>
@@ -171,7 +184,7 @@ const PublicIssues = () => {
                           )}
                         </div>
                         
-                        <span style={{ fontSize: '0.85rem', color: '#7f8c8d' }}>Reported: {new Date(issue.reportedAt).toLocaleDateString()}</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Reported: {new Date(issue.reportedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </Link>
@@ -188,15 +201,15 @@ const PublicIssues = () => {
                 disabled={page === 1}
                 style={{ padding: '0.5rem', cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'transparent', border: 'none' }}
               >
-                <ChevronLeft size={24} color={page === 1 ? '#ccc' : '#2c3e50'} />
+                <ChevronLeft size={24} color={page === 1 ? 'var(--border-color)' : 'var(--text-primary)'} />
               </button>
-              <span style={{ fontSize: '0.9rem', color: '#7f8c8d' }}>Page {page} of {totalPages}</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Page {page} of {totalPages}</span>
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
                 disabled={page === totalPages}
                 style={{ padding: '0.5rem', cursor: page === totalPages ? 'not-allowed' : 'pointer', background: 'transparent', border: 'none' }}
               >
-                <ChevronRight size={24} color={page === totalPages ? '#ccc' : '#2c3e50'} />
+                <ChevronRight size={24} color={page === totalPages ? 'var(--border-color)' : 'var(--text-primary)'} />
               </button>
             </div>
           )}

@@ -9,8 +9,9 @@ const { evaluateSLA, evaluateSingleSLA } = require('../utils/slaService');
 exports.createIssue = async (req, res) => {
   try {
     req.body.reportedBy = req.user.id;
+    req.body.reporterType = req.user.role === 'staff' ? 'staff' : 'student';
     // Prevent students from setting status/priority freely
-    if (req.user.role === 'student') {
+    if (req.user.role === 'student' || req.user.role === 'staff') {
       req.body.status = 'Pending';
       // They can suggest priority, but let's allow it as default or what they send
     }
@@ -75,9 +76,7 @@ exports.getIssues = async (req, res) => {
 
     query = MaintenanceIssue.find(queryObj);
 
-    if (req.user.role === 'admin' && req.query.my !== 'true') {
-      query = query.populate('reportedBy', 'name email');
-    } else if (req.query.my !== 'true') {
+    if (req.query.my !== 'true') {
       query = query.select('-reportedBy');
     }
 
@@ -129,12 +128,8 @@ exports.getIssue = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    if (req.user.role === 'admin') {
-      issue = await MaintenanceIssue.findById(req.params.id).populate('reportedBy', 'name email');
-    } else {
-      if (issue.reportedBy.toString() !== req.user.id) {
-        issue.reportedBy = undefined;
-      }
+    if (req.user.role !== 'admin' && issue.reportedBy.toString() !== req.user.id) {
+      issue.reportedBy = undefined;
     }
 
     issue = await evaluateSingleSLA(issue);
@@ -285,12 +280,20 @@ exports.getStats = async (req, res) => {
         category: i.category,
         location: i.location,
         priority: i.priority,
-        breachHours
+        breachHours,
+        reporterType: i.reporterType
       };
     });
     
-    const criticalUnresolved = issues.filter(i => i.status !== 'Resolved' && i.priority === 'Critical');
-    const oldestUnresolved = [...issues.filter(i => i.status !== 'Resolved')].sort((a,b) => new Date(a.reportedAt) - new Date(b.reportedAt)).slice(0,5);
+    const criticalUnresolved = issues.filter(i => i.status !== 'Resolved' && i.priority === 'Critical').map(i => ({
+      _id: i._id, title: i.title, location: i.location, reporterType: i.reporterType
+    }));
+    const oldestUnresolved = [...issues.filter(i => i.status !== 'Resolved')].sort((a,b) => new Date(a.reportedAt) - new Date(b.reportedAt)).slice(0,5).map(i => ({
+      _id: i._id, title: i.title, reportedAt: i.reportedAt, reporterType: i.reporterType
+    }));
+
+    const studentReports = issues.filter(i => i.reporterType === 'student').length;
+    const staffReports = issues.filter(i => i.reporterType === 'staff').length;
 
     res.status(200).json({
       success: true,
@@ -299,6 +302,10 @@ exports.getStats = async (req, res) => {
         issuesByCategory: Object.entries(issuesByCategory).map(([name, value]) => ({ name, value })),
         issuesByPriority: Object.entries(issuesByPriority).map(([name, value]) => ({ name, value })),
         issuesByStatus: Object.entries(issuesByStatus).map(([name, value]) => ({ name, value })),
+        reportsByUserType: {
+          student: studentReports,
+          staff: staffReports
+        },
         mostAffectedLocations,
         mostReportedCategories,
         activeBreaches,

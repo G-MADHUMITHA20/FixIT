@@ -18,6 +18,10 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Passwords do not match' });
     }
 
+    if (process.env.COLLEGE_EMAIL_DOMAIN && !email.endsWith(`@${process.env.COLLEGE_EMAIL_DOMAIN}`)) {
+      return res.status(400).json({ success: false, message: `Please use a valid @${process.env.COLLEGE_EMAIL_DOMAIN} email address` });
+    }
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {

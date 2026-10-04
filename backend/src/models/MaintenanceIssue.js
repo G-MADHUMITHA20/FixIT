@@ -45,6 +45,12 @@ const maintenanceIssueSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    reporterType: {
+      type: String,
+      enum: ['student', 'staff'],
+      required: true,
+      default: 'student',
+    },
     affectedUsers: {
       type: Number,
       default: 1,
@@ -80,7 +86,7 @@ const maintenanceIssueSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-maintenanceIssueSchema.pre('save', function (next) {
+maintenanceIssueSchema.pre('save', function () {
   const weights = { Critical: 4, High: 3, Medium: 2, Low: 1 };
   const slaHours = { Critical: 24, High: 48, Medium: 72, Low: 96 };
   
@@ -90,7 +96,6 @@ maintenanceIssueSchema.pre('save', function (next) {
     const baseDate = this.reportedAt || Date.now();
     this.slaDeadline = new Date(new Date(baseDate).getTime() + hours * 60 * 60 * 1000);
   }
-  next();
 });
 
 module.exports = mongoose.model('MaintenanceIssue', maintenanceIssueSchema);
