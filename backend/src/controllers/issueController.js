@@ -23,8 +23,15 @@ exports.createIssue = async (req, res) => {
         return res.status(409).json({
           success: false,
           isDuplicate: true,
-          matchingIssue: duplicate,
-          message: 'Similar issue already reported'
+          message: 'A similar issue has already been reported.',
+          existingIssue: {
+            id: duplicate._id,
+            title: duplicate.title,
+            category: duplicate.category,
+            location: duplicate.location,
+            status: duplicate.status,
+            affectedUsers: duplicate.affectedUsers
+          }
         });
       }
     }
@@ -324,15 +331,23 @@ exports.supportIssue = async (req, res) => {
     if (!issue) return res.status(404).json({ success: false, message: 'Issue not found' });
     
     const userId = req.user.id;
+    if (issue.status === 'Resolved') {
+      return res.status(400).json({ success: false, message: 'Cannot support a resolved issue' });
+    }
     if (issue.reportedBy.toString() === userId || issue.supportedBy.includes(userId)) {
       return res.status(400).json({ success: false, message: 'You have already reported or supported this issue' });
     }
     
-    issue.supportedBy.push(userId);
-    issue.affectedUsers = issue.affectedUsers + 1;
-    await issue.save();
+    const updatedIssue = await MaintenanceIssue.findByIdAndUpdate(
+      req.params.id,
+      {
+        $addToSet: { supportedBy: userId },
+        $inc: { affectedUsers: 1 }
+      },
+      { new: true }
+    );
     
-    res.status(200).json({ success: true, data: issue });
+    res.status(200).json({ success: true, data: updatedIssue });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

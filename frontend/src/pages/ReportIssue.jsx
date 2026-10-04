@@ -25,7 +25,7 @@ const ReportIssue = () => {
       navigate('/my-issues');
     } catch (err) {
       if (err.response?.status === 409 && err.response?.data?.isDuplicate) {
-        setDuplicateIssue(err.response.data.matchingIssue);
+        setDuplicateIssue(err.response.data.existingIssue);
       } else {
         setError(err.response?.data?.message || 'Error reporting issue');
       }
@@ -37,8 +37,8 @@ const ReportIssue = () => {
   const handleSupportExisting = async () => {
     setLoading(true);
     try {
-      await api.post(`/issues/${duplicateIssue._id}/support`);
-      alert('Successfully supported the existing issue.');
+      await api.post(`/issues/${duplicateIssue.id}/support`);
+      alert('Issue supported successfully.');
       navigate('/my-issues');
     } catch (err) {
       setError(err.response?.data?.message || 'Error supporting issue');
@@ -48,8 +48,8 @@ const ReportIssue = () => {
     }
   };
 
-  const handleReportDifferent = () => {
-    handleSubmit(null, true); // Submit bypassing check
+  const handleCancel = () => {
+    setDuplicateIssue(null);
   };
 
   return (
@@ -61,23 +61,25 @@ const ReportIssue = () => {
         
         {duplicateIssue ? (
           <div style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <h3 style={{ color: 'var(--warning)', marginTop: 0 }}>Similar issue already reported</h3>
-            <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>We noticed an active issue that matches your description. Adding your support will help prioritize it without creating duplicates.</p>
+            <h3 style={{ color: 'var(--warning)', marginTop: 0 }}>Similar Issue Already Reported</h3>
+            <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>A similar maintenance issue has already been reported for:</p>
             
             <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
               <h4 style={{ margin: '0 0 0.5rem 0' }}>{duplicateIssue.title}</h4>
               <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Category:</strong> {duplicateIssue.category}</p>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Location:</strong> {duplicateIssue.location}</p>
+              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>📍 {duplicateIssue.location}</p>
               <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Status:</strong> {duplicateIssue.status}</p>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Affected Students:</strong> {duplicateIssue.affectedUsers}</p>
+              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Affected users:</strong> {duplicateIssue.affectedUsers}</p>
             </div>
+            
+            <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>You can support the existing issue instead of creating another complaint.</p>
             
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <button onClick={handleSupportExisting} disabled={loading} className="btn-primary" style={{ flex: 1, padding: '0.75rem', background: 'var(--accent-primary)', color: 'var(--bg-surface)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
                 {loading ? 'Processing...' : 'Support Existing Issue'}
               </button>
-              <button onClick={handleReportDifferent} disabled={loading} style={{ flex: 1, padding: '0.75rem', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--text-secondary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-                Report Different Issue
+              <button onClick={handleCancel} disabled={loading} style={{ flex: 1, padding: '0.75rem', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--text-secondary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                Cancel
               </button>
             </div>
           </div>
