@@ -62,8 +62,35 @@ const maintenanceIssueSchema = new mongoose.Schema(
     resolvedAt: {
       type: Date,
     },
+    priorityWeight: {
+      type: Number,
+      default: 2,
+    },
+    slaDeadline: {
+      type: Date,
+    },
+    isEscalated: {
+      type: Boolean,
+      default: false,
+    },
+    escalatedAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
+
+maintenanceIssueSchema.pre('save', function (next) {
+  const weights = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+  const slaHours = { Critical: 24, High: 48, Medium: 72, Low: 96 };
+  
+  if (this.isModified('priority') || this.isNew) {
+    this.priorityWeight = weights[this.priority] || 2;
+    const hours = slaHours[this.priority] || 72;
+    const baseDate = this.reportedAt || Date.now();
+    this.slaDeadline = new Date(new Date(baseDate).getTime() + hours * 60 * 60 * 1000);
+  }
+  next();
+});
 
 module.exports = mongoose.model('MaintenanceIssue', maintenanceIssueSchema);

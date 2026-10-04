@@ -34,7 +34,7 @@ const StudentDashboard = () => {
           campusTotal: publicIssues.length
         });
       } catch (err) {
-        console.error("Failed to fetch stats", err);
+        // Error is intentionally caught to not crash dashboard
       } finally {
         setLoading(false);
       }

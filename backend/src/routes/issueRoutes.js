@@ -6,13 +6,15 @@ const {
   updateIssue,
   deleteIssue,
   checkDuplicate,
-  supportIssue
+  supportIssue,
+  getStats
 } = require('../controllers/issueController');
 
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+router.get('/stats', protect, getStats);
 router.post('/check-duplicate', protect, checkDuplicate);
 router.post('/:id/support', protect, supportIssue);
 
