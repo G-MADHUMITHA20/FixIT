@@ -12,42 +12,47 @@ import MyIssues from './pages/MyIssues';
 import PublicIssues from './pages/PublicIssues';
 import IssueDetails from './pages/IssueDetails';
 import './index.css';
+import './App.css';
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <Navbar />
-          <div className="dashboard">
-            <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          <Route 
-            path="/student-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['student', 'staff']}>
-                <StudentDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
+          <div className="dashboard-layout">
+            <div className="main-content">
+              <Navbar />
+              <div className="dashboard-container">
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  
+                  <Route 
+                    path="/student-dashboard" 
+                    element={
+                      <ProtectedRoute allowedRoles={['student', 'staff']}>
+                        <StudentDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin-dashboard" 
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
 
-          <Route path="/report-issue" element={<ProtectedRoute allowedRoles={['student', 'staff']}><ReportIssue /></ProtectedRoute>} />
-          <Route path="/my-issues" element={<ProtectedRoute allowedRoles={['student', 'staff']}><MyIssues /></ProtectedRoute>} />
-          <Route path="/public-issues" element={<ProtectedRoute><PublicIssues /></ProtectedRoute>} />
-          <Route path="/issues/:id" element={<ProtectedRoute><IssueDetails /></ProtectedRoute>} />
+                  <Route path="/report-issue" element={<ProtectedRoute allowedRoles={['student', 'staff']}><ReportIssue /></ProtectedRoute>} />
+                  <Route path="/my-issues" element={<ProtectedRoute allowedRoles={['student', 'staff']}><MyIssues /></ProtectedRoute>} />
+                  <Route path="/public-issues" element={<ProtectedRoute><PublicIssues /></ProtectedRoute>} />
+                  <Route path="/issues/:id" element={<ProtectedRoute><IssueDetails /></ProtectedRoute>} />
 
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
+                  <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+              </div>
+            </div>
           </div>
         </Router>
       </AuthProvider>

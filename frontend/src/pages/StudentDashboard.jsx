@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { LogOut, Wrench, BarChart2, AlertCircle, CheckCircle, Users } from 'lucide-react';
+import { ShieldCheck, BarChart2, AlertCircle, CheckCircle, Users, PenTool, LayoutList, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
@@ -43,86 +43,107 @@ const StudentDashboard = () => {
   }, [user.id]);
 
   return (
-    <div className="dashboard">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
-        <Wrench size={28} color="var(--accent-primary)" />
-        <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
-          {user?.role === 'staff' ? 'Staff Portal' : 'Student Portal'}
-        </h2>
+    <>
+      <div className="page-title">
+        <ShieldCheck size={28} color="var(--color-primary)" />
+        <h2 style={{ margin: 0 }}>{user?.role === 'staff' ? 'Staff Portal' : 'Student Portal'}</h2>
       </div>
+      <p className="page-subtitle">Welcome back, {user?.name}. Here is an overview of campus maintenance.</p>
 
-      <main>
-        {loading ? (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
           <p>Loading dashboard...</p>
-        ) : (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-              <div className="status-card" style={{ padding: '1.5rem', borderLeft: '4px solid var(--accent-primary)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)' }}>My Active Issues</h3>
-                  <AlertCircle size={20} color="var(--accent-primary)" />
-                </div>
-                <p style={{ margin: 0, fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.myActive}</p>
+        </div>
+      ) : (
+        <>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Personal Overview</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+            
+            <div className="surface-card" style={{ borderTop: '4px solid var(--color-warning)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>My Active Issues</h3>
+                <AlertCircle size={20} color="var(--color-warning)" />
               </div>
-              
-              <div className="status-card" style={{ padding: '1.5rem', borderLeft: '4px solid var(--success)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)' }}>My Resolved Issues</h3>
-                  <CheckCircle size={20} color="var(--success)" />
-                </div>
-                <p style={{ margin: 0, fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.myResolved}</p>
+              <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{stats.myActive}</p>
+            </div>
+            
+            <div className="surface-card" style={{ borderTop: '4px solid var(--color-success)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>My Resolved Issues</h3>
+                <CheckCircle size={20} color="var(--color-success)" />
               </div>
-
-              <div className="status-card" style={{ padding: '1.5rem', borderLeft: '4px solid var(--warning)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)' }}>Issues I Supported</h3>
-                  <Users size={20} color="var(--warning)" />
-                </div>
-                <p style={{ margin: 0, fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.supported}</p>
-              </div>
-
-              <div className="status-card" style={{ padding: '1.5rem', borderLeft: '4px solid var(--danger)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)' }}>Campus Active Issues</h3>
-                  <BarChart2 size={20} color="var(--danger)" />
-                </div>
-                <p style={{ margin: 0, fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.campusActive}</p>
-              </div>
-              
-              <div className="status-card" style={{ padding: '1.5rem', borderLeft: '4px solid var(--info)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)' }}>Total Campus Issues</h3>
-                  <BarChart2 size={20} color="var(--info)" />
-                </div>
-                <p style={{ margin: 0, fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.campusTotal}</p>
-              </div>
+              <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{stats.myResolved}</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <Link to="/report-issue" style={{ textDecoration: 'none' }}>
-                <div className="status-card" style={{ padding: '2rem', cursor: 'pointer', textAlign: 'center', background: 'var(--accent-primary)', color: 'var(--bg-surface)' }}>
-                  <Wrench size={32} style={{ marginBottom: '1rem' }} />
-                  <h3 style={{ margin: 0 }}>Report an Issue</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.9, marginTop: '0.5rem' }}>Submit a new campus maintenance request.</p>
-                </div>
-              </Link>
-              <Link to="/my-issues" style={{ textDecoration: 'none' }}>
-                <div className="status-card" style={{ padding: '2rem', cursor: 'pointer', textAlign: 'center' }}>
-                  <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>My Issues</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>View and track issues you have reported.</p>
-                </div>
-              </Link>
-              <Link to="/public-issues" style={{ textDecoration: 'none', gridColumn: '1 / -1' }}>
-                <div className="status-card" style={{ padding: '2rem', cursor: 'pointer', textAlign: 'center' }}>
-                  <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Public Campus Issues Feed</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>See what's being fixed around the campus.</p>
-                </div>
-              </Link>
+            <div className="surface-card" style={{ borderTop: '4px solid var(--color-info)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Issues I Supported</h3>
+                <Users size={20} color="var(--color-info)" />
+              </div>
+              <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{stats.supported}</p>
             </div>
-          </>
-        )}
-      </main>
-    </div>
+          </div>
+
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Campus Overview</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+            <div className="surface-card" style={{ borderTop: '4px solid var(--color-danger)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Campus Active Issues</h3>
+                <BarChart2 size={20} color="var(--color-danger)" />
+              </div>
+              <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{stats.campusActive}</p>
+            </div>
+            
+            <div className="surface-card" style={{ borderTop: '4px solid var(--color-primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Total Campus Issues</h3>
+                <BarChart2 size={20} color="var(--color-primary)" />
+              </div>
+              <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{stats.campusTotal}</p>
+            </div>
+          </div>
+
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Quick Actions</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            <Link to="/report-issue" style={{ textDecoration: 'none' }}>
+              <div className="surface-card interactive" style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', height: '100%', background: 'var(--color-primary)', color: '#fff', border: 'none' }}>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <PenTool size={24} color="#fff" />
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 0.25rem 0', color: '#fff', fontSize: '1.1rem' }}>Report an Issue</h3>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', lineHeight: 1.4 }}>Submit a new campus maintenance request for a broken facility or service.</p>
+                </div>
+              </div>
+            </Link>
+            
+            <Link to="/my-issues" style={{ textDecoration: 'none' }}>
+              <div className="surface-card interactive" style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', height: '100%' }}>
+                <div style={{ background: 'color-mix(in srgb, var(--color-info) 10%, transparent)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <LayoutList size={24} color="var(--color-info)" />
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text-primary)', fontSize: '1.1rem' }}>My Issues</h3>
+                  <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.9rem', lineHeight: 1.4 }}>View and track the status of maintenance issues you have reported.</p>
+                </div>
+              </div>
+            </Link>
+            
+            <Link to="/public-issues" style={{ textDecoration: 'none' }}>
+              <div className="surface-card interactive" style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', height: '100%' }}>
+                <div style={{ background: 'color-mix(in srgb, var(--color-success) 10%, transparent)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <Globe size={24} color="var(--color-success)" />
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text-primary)', fontSize: '1.1rem' }}>Campus Issues Feed</h3>
+                  <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.9rem', lineHeight: 1.4 }}>See what's being fixed around the campus and support existing issues.</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </>
+      )}
+    </>
   );
 };
 

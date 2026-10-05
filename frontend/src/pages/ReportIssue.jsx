@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { PenTool, AlertTriangle, MapPin, Tag, Flag } from 'lucide-react';
 
 const categories = [
   'Electrical', 'Plumbing / Water Leakage', 'Furniture', 'Classroom', 
@@ -38,7 +39,6 @@ const ReportIssue = () => {
     setLoading(true);
     try {
       await api.post(`/issues/${duplicateIssue.id}/support`);
-      alert('Issue supported successfully.');
       navigate('/my-issues');
     } catch (err) {
       setError(err.response?.data?.message || 'Error supporting issue');
@@ -53,69 +53,121 @@ const ReportIssue = () => {
   };
 
   return (
-    <div className="dashboard">
-      <div className="status-card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
-        <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Report Maintenance Issue</h2>
-        
-        {error && <div className="error-message" style={{ color: 'var(--danger)', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '4px', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
+    <>
+      <div className="page-title">
+        <PenTool size={28} color="var(--color-primary)" />
+        <h2 style={{ margin: 0 }}>Report an Issue</h2>
+      </div>
+      <p className="page-subtitle">Help us keep the campus safe, functional and comfortable.</p>
+
+      <div className="surface-card" style={{ maxWidth: '700px', margin: '0 auto', padding: '2rem' }}>
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
         
         {duplicateIssue ? (
-          <div style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <h3 style={{ color: 'var(--warning)', marginTop: 0 }}>Similar Issue Already Reported</h3>
-            <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>A similar maintenance issue has already been reported for:</p>
+          <div style={{ backgroundColor: 'color-mix(in srgb, var(--color-warning) 10%, var(--color-surface))', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)' }}>
+            <h3 className="flex items-center gap-1 text-warning mt-0" style={{ fontSize: '1.1rem' }}>
+              <AlertTriangle size={20} /> Similar Issue Already Reported
+            </h3>
+            <p style={{ fontSize: '0.95rem', marginBottom: '1.5rem', color: 'var(--color-text-secondary)' }}>A similar maintenance issue has already been reported in this location.</p>
             
-            <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>{duplicateIssue.title}</h4>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Category:</strong> {duplicateIssue.category}</p>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>📍 {duplicateIssue.location}</p>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Status:</strong> {duplicateIssue.status}</p>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Affected users:</strong> {duplicateIssue.affectedUsers}</p>
+            <div className="surface-card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{duplicateIssue.title}</h4>
+              <div className="flex items-center gap-1 mb-2">
+                <MapPin size={14} color="var(--color-text-secondary)" />
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{duplicateIssue.location}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Status</span>
+                  <span className={`badge badge-${duplicateIssue.status.toLowerCase().replace(' ', '-')}`}>{duplicateIssue.status}</span>
+                </div>
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Affected</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{duplicateIssue.affectedUsers} Users</span>
+                </div>
+              </div>
             </div>
             
-            <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>You can support the existing issue instead of creating another complaint.</p>
-            
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <button onClick={handleSupportExisting} disabled={loading} className="btn-primary" style={{ flex: 1, padding: '0.75rem', background: 'var(--accent-primary)', color: 'var(--bg-surface)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+            <div className="flex gap-2">
+              <button onClick={handleSupportExisting} disabled={loading} className="btn btn-primary" style={{ flex: 1 }}>
                 {loading ? 'Processing...' : 'Support Existing Issue'}
               </button>
-              <button onClick={handleCancel} disabled={loading} style={{ flex: 1, padding: '0.75rem', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--text-secondary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+              <button onClick={handleCancel} disabled={loading} className="btn btn-secondary" style={{ flex: 1 }}>
                 Cancel
               </button>
             </div>
           </div>
         ) : (
-          <form onSubmit={(e) => handleSubmit(e, false)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <input
-              className="form-input" placeholder="Issue Title" required
-              value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})}
-              style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-            />
-            <textarea
-              className="form-input" placeholder="Description" required rows="4"
-              value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})}
-              style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-            />
-            <select className="form-input" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input
-              className="form-input" placeholder="Location (e.g. Block A, Room 101)" required
-              value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})}
-              style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-            />
-            <select className="form-input" value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})} style={{ padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
-              <option value="Low">Low Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="High">High Priority</option>
-              <option value="Critical">Critical Priority</option>
-            </select>
-            <button type="submit" disabled={loading} className="btn-primary" style={{ padding: '0.75rem', background: 'var(--accent-primary)', color: 'var(--bg-surface)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginTop: '1rem' }}>
-              {loading ? 'Submitting...' : 'Submit Issue'}
-            </button>
+          <form onSubmit={(e) => handleSubmit(e, false)}>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>Issue Details</h3>
+            
+            <div className="form-group">
+              <label className="form-label">Issue Title</label>
+              <input
+                type="text"
+                className="form-input" 
+                placeholder="e.g., Broken projector in Room 301" 
+                required
+                value={formData.title} 
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea
+                className="form-textarea" 
+                placeholder="Please describe the issue in detail..." 
+                required 
+                rows="5"
+                value={formData.description} 
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+              />
+            </div>
+
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--color-border)', marginTop: '2rem', color: 'var(--color-text-primary)' }}>Classification & Location</h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="form-group">
+                <label className="form-label flex items-center gap-1"><Tag size={16}/> Category</label>
+                <select className="form-select" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label flex items-center gap-1"><Flag size={16}/> Priority</label>
+                <select className="form-select" value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})}>
+                  <option value="Low">Low Priority</option>
+                  <option value="Medium">Medium Priority</option>
+                  <option value="High">High Priority</option>
+                  <option value="Critical">Critical Priority</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group mb-4">
+              <label className="form-label flex items-center gap-1"><MapPin size={16}/> Location</label>
+              <input
+                type="text"
+                className="form-input" 
+                placeholder="e.g., Block A, Room 101" 
+                required
+                value={formData.location} 
+                onChange={(e) => setFormData({...formData, location: e.target.value})}
+              />
+            </div>
+            
+            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ padding: '0.75rem 2rem' }}>
+                {loading ? 'Submitting...' : 'Submit Issue'}
+              </button>
+            </div>
           </form>
         )}
       </div>
-    </div>
+    </>
   );
 };
 export default ReportIssue;

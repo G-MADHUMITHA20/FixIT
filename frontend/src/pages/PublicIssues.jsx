@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { Search, Filter, Wrench, Users, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Globe, Users, CheckCircle, ChevronLeft, ChevronRight, Tag, MapPin, Flag } from 'lucide-react';
 
 const categories = [
   'All Categories', 'Electrical', 'Plumbing / Water Leakage', 'Furniture', 'Classroom', 
@@ -60,7 +60,6 @@ const PublicIssues = () => {
   }, [search, categoryFilter, statusFilter, priorityFilter, sortParam, page]);
 
   useEffect(() => {
-    // Debounce search slightly
     const timer = setTimeout(() => {
       fetchIssues();
     }, 300);
@@ -68,123 +67,131 @@ const PublicIssues = () => {
   }, [fetchIssues]);
 
   const handleSupport = async (e, issueId) => {
-    e.preventDefault(); // Prevent navigating to issue details
+    e.preventDefault(); 
     try {
       await api.post(`/issues/${issueId}/support`);
-      fetchIssues(); // Refresh list to update count and supported state
+      fetchIssues(); 
     } catch (err) {
       alert(err.response?.data?.message || 'Error supporting issue');
     }
   };
 
   return (
-    <div className="dashboard">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-          <Wrench size={28} color="var(--text-primary)" /> Public Campus Issues
-        </h2>
+    <>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <div className="page-title">
+            <Globe size={28} color="var(--color-primary)" />
+            <h2 style={{ margin: 0 }}>Campus Issues</h2>
+          </div>
+          <p className="page-subtitle" style={{ marginBottom: 0 }}>Directory of all reported maintenance issues across the campus.</p>
+        </div>
         {user?.role === 'student' && (
-          <Link to="/report-issue" className="btn-primary" style={{ textDecoration: 'none', padding: '0.5rem 1rem', background: 'var(--accent-primary)', color: 'var(--bg-surface)', borderRadius: '4px' }}>Report Issue</Link>
+          <Link to="/report-issue" className="btn btn-primary">Report Issue</Link>
         )}
       </div>
       
-      <div className="status-card" style={{ padding: '1.5rem', marginBottom: '2rem', textAlign: 'left', background: 'var(--bg-secondary)' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: '1 1 250px', position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', top: '10px', left: '10px', color: 'var(--text-secondary)' }} />
-            <input 
-              type="text" 
-              placeholder="Search title, description, or location..." 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="form-input"
-              style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: '2 1 400px' }}>
-            <select className="form-input" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className="form-input" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
-              {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <select className="form-input" value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
-              {priorities.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select className="form-input" value={sortParam} onChange={(e) => { setSortParam(e.target.value); setPage(1); }} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', flex: 1 }}>
-              {sortOptions.map(opt => <option key={opt.value} value={opt.value}>Sort: {opt.label}</option>)}
+      {/* Filters */}
+      <div className="surface-card mb-4" style={{ padding: '1rem 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ flex: '1 1 250px', position: 'relative' }}>
+          <Search size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-input-placeholder)' }} />
+          <input 
+            type="text" 
+            placeholder="Search issues..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="form-input"
+            style={{ paddingLeft: '2.5rem' }}
+          />
+        </div>
+        
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', flex: '2 1 400px' }}>
+          <select className="form-select" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} style={{ flex: 1, minWidth: '130px' }}>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select className="form-select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ flex: 1, minWidth: '130px' }}>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select className="form-select" value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} style={{ flex: 1, minWidth: '130px' }}>
+            {priorities.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '130px' }}>
+            <Filter size={16} color="var(--color-text-secondary)" />
+            <select className="form-select" value={sortParam} onChange={(e) => { setSortParam(e.target.value); setPage(1); }} style={{ width: '100%' }}>
+              {sortOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
         </div>
       </div>
 
-      {loading ? <p>Loading issues...</p> : error ? <p className="error-message" style={{ color: 'var(--danger)' }}>{error}</p> : (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
+          <p>Loading issues...</p>
+        </div>
+      ) : error ? (
+        <div className="alert alert-danger">{error}</div>
+      ) : (
         <>
           <div style={{ display: 'grid', gap: '1rem' }}>
-            {issues.length === 0 ? <div className="status-card"><p>No issues match your criteria.</p></div> : 
+            {issues.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem 2rem' }} className="surface-card">
+                <Search size={32} color="var(--color-text-muted)" style={{ margin: '0 auto 1rem auto' }} />
+                <h3 style={{ fontSize: '1.25rem', color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>No issues found</h3>
+                <p style={{ color: 'var(--color-text-secondary)' }}>Try adjusting your filters or search term.</p>
+              </div>
+            ) : 
               issues.map(issue => {
                 const hasSupported = issue.supportedBy && issue.supportedBy.includes(user?._id || user?.id);
                 const isResolved = issue.status === 'Resolved';
                 
                 return (
-                  <Link to={`/issues/${issue._id}`} key={issue._id} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="status-card" style={{ textAlign: 'left', cursor: 'pointer', padding: '1.5rem', borderLeft: `4px solid ${isResolved ? 'var(--success)' : issue.status === 'In Progress' ? 'var(--warning)' : 'var(--warning)'}` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '1.2rem' }}>{issue.title}</h3>
-                        <span style={{ 
-                          fontWeight: 'bold', 
-                          fontSize: '0.85rem',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '12px',
-                          background: issue.status === 'Pending' ? 'var(--bg-secondary)' : isResolved ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
-                          color: issue.status === 'Pending' ? 'var(--warning)' : isResolved ? 'var(--success)' : 'var(--warning)'
-                        }}>{issue.status}</span>
-                      </div>
-                      {user?.role === 'admin' && (
-                        <div style={{ marginBottom: '0.5rem' }}>
-                          <span style={{
-                            fontSize: '0.8rem',
-                            padding: '0.2rem 0.5rem',
-                            borderRadius: '4px',
-                            background: issue.reporterType === 'staff' ? 'var(--info)' : 'var(--accent-primary)',
-                            color: 'var(--bg-surface)'
-                          }}>
-                            {issue.reporterType === 'staff' ? '🧑‍🏫 Reported by Staff' : '🎓 Reported by Student'}
-                          </span>
+                  <Link to={`/issues/${issue._id}`} key={issue._id} style={{ textDecoration: 'none', display: 'block' }}>
+                    <div className="surface-card interactive" style={{ padding: '1.25rem 1.5rem', borderLeft: `4px solid ${isResolved ? 'var(--color-success)' : issue.status === 'In Progress' ? 'var(--color-info)' : 'var(--color-warning)'}` }}>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-2">
+                          <h3 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '1.1rem', fontWeight: 600 }}>{issue.title}</h3>
+                          {user?.role === 'admin' && (
+                            <span className="badge" style={{ fontSize: '0.65rem', backgroundColor: issue.reporterType === 'staff' ? 'var(--color-info)' : 'var(--color-primary)', color: '#fff' }}>
+                              {issue.reporterType === 'staff' ? 'Staff' : 'Student'}
+                            </span>
+                          )}
                         </div>
-                      )}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.5rem', margin: '0.5rem 0' }}>
-                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}><strong>Category:</strong> {issue.category}</p>
-                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}><strong>Location:</strong> {issue.location}</p>
-                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                          <strong>Priority:</strong> <span style={{ color: issue.priority === 'Critical' ? 'var(--danger)' : issue.priority === 'High' ? 'var(--danger)' : 'inherit' }}>{issue.priority} Priority</span>
-                        </p>
+                        <span className={`badge badge-${issue.status.toLowerCase().replace(' ', '-')}`}>{issue.status}</span>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <Users size={16} /> {issue.affectedUsers} students affected
+                      <div style={{ display: 'flex', gap: '1.5rem', margin: '0.75rem 0', flexWrap: 'wrap' }}>
+                        <span className="flex items-center gap-1 text-muted" style={{ fontSize: '0.85rem' }}><Tag size={14}/> {issue.category}</span>
+                        <span className="flex items-center gap-1 text-muted" style={{ fontSize: '0.85rem' }}><MapPin size={14}/> {issue.location}</span>
+                        <span className="flex items-center gap-1 text-muted" style={{ fontSize: '0.85rem' }}>
+                          <Flag size={14}/> Priority: <strong style={{ color: issue.priority === 'Critical' ? 'var(--color-danger)' : issue.priority === 'High' ? 'var(--color-warning)' : 'inherit' }}>{issue.priority}</strong>
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                            <Users size={16} color="var(--color-text-secondary)" /> {issue.affectedUsers} affected
                           </span>
                           
                           {/* Support Mechanism */}
                           {user?.role === 'student' && !isResolved && (
                             hasSupported ? (
-                              <span style={{ fontSize: '0.85rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 'bold' }}>
-                                <CheckCircle size={14} /> You supported this issue
+                              <span className="flex items-center gap-1 text-success" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                <CheckCircle size={16} /> Supported
                               </span>
                             ) : (
                               <button 
                                 onClick={(e) => handleSupport(e, issue._id)} 
-                                style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer' }}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', height: 'auto' }}
                               >
-                                Support this issue
+                                Support Issue
                               </button>
                             )
                           )}
                         </div>
                         
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Reported: {new Date(issue.reportedAt).toLocaleDateString()}</span>
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>Reported {new Date(issue.reportedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </Link>
@@ -193,29 +200,31 @@ const PublicIssues = () => {
             }
           </div>
           
-          {/* Pagination Controls */}
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+            <div className="flex justify-center items-center gap-2 mt-4">
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))} 
                 disabled={page === 1}
-                style={{ padding: '0.5rem', cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'transparent', border: 'none' }}
+                className="btn btn-secondary"
+                style={{ padding: '0.5rem' }}
               >
-                <ChevronLeft size={24} color={page === 1 ? 'var(--border-color)' : 'var(--text-primary)'} />
+                <ChevronLeft size={20} />
               </button>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Page {page} of {totalPages}</span>
+              <span className="text-secondary" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Page {page} of {totalPages}</span>
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
                 disabled={page === totalPages}
-                style={{ padding: '0.5rem', cursor: page === totalPages ? 'not-allowed' : 'pointer', background: 'transparent', border: 'none' }}
+                className="btn btn-secondary"
+                style={{ padding: '0.5rem' }}
               >
-                <ChevronRight size={24} color={page === totalPages ? 'var(--border-color)' : 'var(--text-primary)'} />
+                <ChevronRight size={20} />
               </button>
             </div>
           )}
         </>
       )}
-    </div>
+    </>
   );
 };
 export default PublicIssues;
