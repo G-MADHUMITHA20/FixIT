@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ManageTechnicians from './pages/ManageTechnicians';
+import TechnicianDashboard from './pages/TechnicianDashboard';
 import ReportIssue from './pages/ReportIssue';
 import MyIssues from './pages/MyIssues';
 import PublicIssues from './pages/PublicIssues';
@@ -40,6 +42,22 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={['admin']}>
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/technicians" 
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <ManageTechnicians />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/technician-dashboard" 
+                    element={
+                      <ProtectedRoute allowedRoles={['technician']}>
+                        <TechnicianDashboard />
                       </ProtectedRoute>
                     } 
                   />

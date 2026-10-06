@@ -61,6 +61,20 @@ const maintenanceIssueSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    assignedTechnician: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    assignedAt: {
+      type: Date,
+      default: null,
+    },
+    assignedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     reportedAt: {
       type: Date,
       default: Date.now,

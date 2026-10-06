@@ -12,11 +12,13 @@ const IssueDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Admin editable states
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('');
   const [note, setNote] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [technicians, setTechnicians] = useState([]);
+  const [selectedTechnician, setSelectedTechnician] = useState('');
+  const [assigning, setAssigning] = useState(false);
 
   useEffect(() => {
     const fetchIssue = async () => {
@@ -31,8 +33,19 @@ const IssueDetails = () => {
         setLoading(false);
       }
     };
+    const fetchTechnicians = async () => {
+      if (user.role === 'admin') {
+        try {
+          const res = await api.get('/admin/technicians');
+          setTechnicians(res.data.data);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
     fetchIssue();
-  }, [id]);
+    fetchTechnicians();
+  }, [id, user.role]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -59,6 +72,23 @@ const IssueDetails = () => {
       } catch (err) {
         alert(err.response?.data?.message || 'Delete failed');
       }
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedTechnician) return alert('Please select a technician');
+    setAssigning(true);
+    try {
+      const res = await api.post(`/issues/${id}/assign`, { technicianId: selectedTechnician });
+      setIssue(res.data.data);
+      // refetch to get updated issue with timeline updates
+      const updated = await api.get(`/issues/${id}`);
+      setIssue(updated.data.data);
+      alert('Technician assigned successfully');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Assignment failed');
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -151,7 +181,7 @@ const IssueDetails = () => {
                   <span style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--color-success)' }}>{new Date(issue.resolvedAt).toLocaleString()}</span>
                 </div>
               )}
-              {user.role === 'admin' && (
+              {(user.role === 'admin' || user.role === 'technician') && (
                 <div>
                   <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Reporter Type</span>
                   <span className="badge" style={{ backgroundColor: issue.reporterType === 'staff' ? 'var(--color-info)' : 'var(--color-primary)', color: '#fff' }}>
@@ -161,6 +191,48 @@ const IssueDetails = () => {
               )}
             </div>
           </div>
+
+          {/* Assigned Technician UI */}
+          {(user.role === 'admin' || user.role === 'technician') && (
+            <div className="surface-card mb-4" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 5%, var(--color-surface))', borderLeft: '4px solid var(--color-primary)' }}>
+              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>Assigned Technician</h3>
+              <div className="flex justify-between items-center" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  {issue.assignedTechnician ? (
+                    <div className="flex items-center gap-2">
+                      <Wrench size={20} color="var(--color-primary)" />
+                      <span style={{ fontSize: '1rem', fontWeight: 500 }}>Assigned to {issue.assignedTechnician.name}</span>
+                    </div>
+                  ) : (
+                    <span style={{ color: 'var(--color-text-muted)' }}>Unassigned</span>
+                  )}
+                </div>
+                {user.role === 'admin' && (
+                  <div className="flex items-center gap-2">
+                    <select 
+                      className="form-select" 
+                      style={{ padding: '0.4rem 2rem 0.4rem 0.8rem' }}
+                      value={selectedTechnician} 
+                      onChange={(e) => setSelectedTechnician(e.target.value)}
+                    >
+                      <option value="">Select Technician ▼</option>
+                      {technicians.map(t => (
+                        <option key={t._id} value={t._id}>{t.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={handleAssign} 
+                      disabled={assigning}
+                      className="btn btn-primary" 
+                      style={{ padding: '0.4rem 1rem' }}
+                    >
+                      {assigning ? 'Assigning...' : 'Assign Technician'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Update History */}
           {issue.updates && issue.updates.length > 0 && (
@@ -195,11 +267,11 @@ const IssueDetails = () => {
             </div>
           )}
 
-          {user.role === 'admin' && (
+          {(user.role === 'admin' || (user.role === 'technician' && issue.assignedTechnician && issue.assignedTechnician.toString() === user.id)) && (
             <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '2rem', marginTop: '1rem' }}>
               <div className="flex items-center gap-2 mb-3">
                 <Settings size={20} color="var(--color-primary)" />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>Admin Operations</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{user.role === 'admin' ? 'Admin Operations' : 'Update Status'}</h3>
               </div>
               
               <div className="surface-card" style={{ backgroundColor: 'var(--color-background)', border: 'none' }}>
@@ -213,15 +285,17 @@ const IssueDetails = () => {
                         <option value="Resolved">Resolved</option>
                       </select>
                     </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Update Priority</label>
-                      <select className="form-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                        <option value="Critical">Critical</option>
-                      </select>
-                    </div>
+                    {user.role === 'admin' && (
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Update Priority</label>
+                        <select className="form-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                          <option value="Critical">Critical</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="form-group" style={{ margin: 0 }}>
@@ -236,9 +310,13 @@ const IssueDetails = () => {
                   </div>
 
                   <div className="flex justify-between items-center mt-2">
-                    <button type="button" onClick={handleDelete} className="btn btn-secondary" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
-                      <Trash2 size={16} /> Delete Issue
-                    </button>
+                    {user.role === 'admin' ? (
+                      <button type="button" onClick={handleDelete} className="btn btn-secondary" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
+                        <Trash2 size={16} /> Delete Issue
+                      </button>
+                    ) : (
+                      <div></div>
+                    )}
                     
                     <button type="submit" disabled={updating} className="btn btn-primary" style={{ padding: '0.6rem 2rem' }}>
                       {updating ? 'Saving Changes...' : 'Save Updates'}

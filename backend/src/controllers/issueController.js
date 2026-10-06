@@ -58,6 +58,10 @@ exports.getIssues = async (req, res) => {
     if (req.query.my === 'true') {
       queryObj.reportedBy = req.user.id;
     }
+    
+    if (req.user.role === 'technician') {
+      queryObj.assignedTechnician = req.user.id;
+    }
 
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
@@ -129,13 +133,14 @@ exports.getIssues = async (req, res) => {
 // @access  Private
 exports.getIssue = async (req, res) => {
   try {
-    let issue = await MaintenanceIssue.findById(req.params.id);
+    let issue = await MaintenanceIssue.findById(req.params.id)
+      .populate('assignedTechnician', 'name email');
 
     if (!issue) {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    if (req.user.role !== 'admin' && issue.reportedBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && issue.reportedBy && issue.reportedBy.toString() !== req.user.id) {
       issue.reportedBy = undefined;
     }
 
@@ -163,9 +168,20 @@ exports.updateIssue = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    // Only admin can change status and priority
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Not authorized to update this issue' });
+      if (req.user.role === 'technician') {
+        if (!issue.assignedTechnician || issue.assignedTechnician.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Not authorized to update this issue' });
+        }
+        // Technician can only update status
+        delete req.body.priority;
+        delete req.body.category;
+        delete req.body.location;
+        delete req.body.title;
+        delete req.body.description;
+      } else {
+        return res.status(403).json({ success: false, message: 'Not authorized to update this issue' });
+      }
     }
 
     const previousStatus = issue.status;
@@ -223,6 +239,79 @@ exports.deleteIssue = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {},
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Assign technician to issue
+// @route   POST /api/issues/:id/assign
+// @access  Private/Admin
+exports.assignTechnician = async (req, res) => {
+  try {
+    const issue = await MaintenanceIssue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized to assign technicians' });
+    }
+
+    const { technicianId } = req.body;
+    
+    if (!technicianId) {
+       return res.status(400).json({ success: false, message: 'Please provide technicianId' });
+    }
+
+    const Notification = require('../models/Notification');
+    const User = require('../models/User');
+    
+    const technician = await User.findById(technicianId);
+    if (!technician || technician.role !== 'technician') {
+        return res.status(400).json({ success: false, message: 'Invalid technician' });
+    }
+
+    const previousTechnician = issue.assignedTechnician;
+    
+    issue.assignedTechnician = technicianId;
+    issue.assignedBy = req.user.id;
+    issue.assignedAt = Date.now();
+    
+    // Status can optionally move to In Progress if it makes sense, but the requirement says "only if this is consistent... Do not introduce unexpected status behavior."
+    // "Assignment itself must NOT automatically mark an issue as Resolved."
+    // Let's keep status update manual by technician to be safe.
+
+    await issue.save();
+
+    let updateNote = `Assigned to Technician: ${technician.name}`;
+    if (previousTechnician) {
+       if (previousTechnician.toString() === technicianId.toString()) {
+           return res.status(400).json({ success: false, message: 'Technician is already assigned to this issue' });
+       }
+       const prevTech = await User.findById(previousTechnician);
+       updateNote = `Reassigned from Technician ${prevTech ? prevTech.name : 'Unknown'} to Technician ${technician.name}`;
+    }
+
+    await IssueUpdate.create({
+      issueId: issue._id,
+      updatedBy: req.user.id,
+      note: updateNote,
+    });
+
+    await Notification.create({
+       recipient: technicianId,
+       type: 'issue_assigned',
+       title: 'New Maintenance Issue Assigned',
+       message: `A new maintenance issue has been assigned to you.`,
+       issue: issue._id
+    });
+
+    res.status(200).json({
+      success: true,
+      data: issue,
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
