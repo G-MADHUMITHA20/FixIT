@@ -3,9 +3,9 @@ const gemmaHarness = require('./gemmaHarness');
 const { getVerifiedInventory } = require('./equipmentInventory');
 
 /**
- * Bounded candidate retrieval limit
+ * Bounded candidate retrieval limit for high-speed evaluation
  */
-const MAX_CANDIDATES = 10;
+const MAX_CANDIDATES = 5;
 
 /**
  * Searches for potential duplicate active complaints using Gemma 4 AI semantic reasoning.
@@ -27,12 +27,28 @@ const findDuplicate = async (category, location, title, description, options = {
   let candidates = options.existingIssues;
 
   if (!candidates) {
-    // Only active complaints (Pending or In Progress) participate in duplicate detection
+    // Per Rule 5 & Rule E, complaints in different physical locations cannot be duplicates.
+    // Efficiently target active complaints in the same location / room to minimize prompt size and avoid unnecessary AI calls.
+    const trimmedLoc = (location || '').trim();
+    const roomMatch = trimmedLoc.match(/\b\d+[a-zA-Z]?\b/);
+    const escapedLoc = trimmedLoc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    let locationFilter;
+    if (roomMatch) {
+      locationFilter = {
+        $or: [
+          { location: { $regex: new RegExp(escapedLoc, 'i') } },
+          { location: { $regex: new RegExp(`\\b${roomMatch[0]}\\b`, 'i') } }
+        ]
+      };
+    } else if (escapedLoc) {
+      locationFilter = { location: { $regex: new RegExp(escapedLoc, 'i') } };
+    } else {
+      locationFilter = { category: { $regex: new RegExp(`^${category}$`, 'i') } };
+    }
+
     candidates = await MaintenanceIssue.find({
-      $or: [
-        { category: { $regex: new RegExp(`^${category}$`, 'i') } },
-        { location: { $regex: new RegExp(`^${location}$`, 'i') } }
-      ],
+      ...locationFilter,
       status: { $in: ['Pending', 'In Progress'] }
     })
       .sort({ createdAt: -1 })

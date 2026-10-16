@@ -21,7 +21,7 @@ class GemmaAPIError extends Error {
 // Default model configuration (Gemma 4 model verified compatible with Gemini API)
 const DEFAULT_MODEL = 'gemma-4-26b-a4b-it';
 const DEFAULT_TIMEOUT_MS = parseInt(process.env.GEMMA_TIMEOUT_MS, 10) || 45000;
-const MAX_CANDIDATES = 10;
+const MAX_CANDIDATES = 5;
 
 // Allowed decision enum
 const ALLOWED_DECISIONS = ['DUPLICATE', 'NOT_DUPLICATE', 'UNCERTAIN'];
@@ -68,15 +68,13 @@ const normalizeLocationKey = (loc = '') => {
  * Builds the structured prompt for Gemma 4
  */
 const buildPrompt = (newComplaint, candidateComplaints, inventoryInfo = null) => {
-  const candidateList = candidateComplaints.map((c, idx) => ({
+  const candidateList = candidateComplaints.slice(0, MAX_CANDIDATES).map((c, idx) => ({
     candidateIndex: idx + 1,
     id: String(c._id || c.id),
     title: c.title,
-    description: c.description,
+    description: c.description || '',
     category: c.category,
-    location: c.location,
-    status: c.status,
-    reportedAt: c.reportedAt || c.createdAt || 'Unknown'
+    location: c.location
   }));
 
   const systemInstructions = `You are the core intelligence of the FixIt Campus Maintenance Reporting System.
@@ -317,7 +315,8 @@ const evaluateComplaint = async (newComplaint, candidateComplaints = [], invento
     ],
     generationConfig: {
       temperature: 0.0,
-      maxOutputTokens: 2048
+      maxOutputTokens: 1024,
+      responseMimeType: 'application/json'
     }
   };
 
