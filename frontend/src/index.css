@@ -338,6 +338,24 @@ a:hover {
   border-color: color-mix(in srgb, var(--color-info) 30%, transparent);
 }
 
+.badge-assigned {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.badge-work-done {
+  background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.badge-reopened {
+  background-color: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  color: var(--color-warning);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
 .badge-resolved {
   background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
   color: var(--color-success);

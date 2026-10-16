@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please provide an email'],
       unique: true,
       match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        /^\S+@\S+\.\S+$/,
         'Please provide a valid email',
       ],
     },
@@ -27,6 +27,64 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['student', 'staff', 'admin', 'technician'],
       default: 'student',
+    },
+    workerId: {
+      type: String,
+      trim: true,
+      sparse: true,
+      unique: true,
+    },
+    specialization: {
+      type: String,
+      enum: [
+        'Electrician',
+        'Plumber',
+        'Carpenter',
+        'IT Technician',
+        'Laboratory Technician',
+        'Housekeeping / Cleaner',
+        'Civil Maintenance Worker',
+        'HVAC / AC Technician',
+        'Electrical',
+        'Plumbing',
+        'Carpentry',
+        'IT',
+        'Cleaning',
+        'General Maintenance',
+        'All',
+      ],
+      default: 'General Maintenance',
+    },
+    availabilityStatus: {
+      type: String,
+      enum: ['Available', 'Unavailable', 'On Leave'],
+      default: 'Available',
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    activeAssignmentsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    maxAssignments: {
+      type: Number,
+      default: 3,
+      min: 1,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isDemo: {
+      type: Boolean,
+      default: false,
+    },
+    phone: {
+      type: String,
+      default: '',
     },
   },
   { timestamps: true }

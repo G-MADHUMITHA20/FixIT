@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { Sun, Moon, LogOut, ShieldCheck, User, Bell } from 'lucide-react';
 import api from '../services/api';
+import realtime from '../services/realtime';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -14,7 +15,7 @@ const Navbar = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
-    if (user && user.role === 'technician') {
+    if (user) {
       const fetchNotifications = async () => {
         try {
           const res = await api.get('/notifications');
@@ -24,6 +25,15 @@ const Navbar = () => {
         }
       };
       fetchNotifications();
+      const unsub = realtime.subscribe('notification', () => fetchNotifications());
+      const unsubSafety = realtime.subscribe('safety_alert', () => fetchNotifications());
+      const unsubFailure = realtime.subscribe('assignment_failed', () => fetchNotifications());
+
+      return () => {
+        unsub();
+        unsubSafety();
+        unsubFailure();
+      };
     }
   }, [user]);
 
@@ -85,7 +95,7 @@ const Navbar = () => {
           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
         </button>
 
-        {user && user.role === 'technician' && (
+        {user && (
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setShowNotifications(!showNotifications)}

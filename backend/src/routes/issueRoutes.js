@@ -8,7 +8,11 @@ const {
   checkDuplicate,
   supportIssue,
   getStats,
-  assignTechnician
+  assignTechnician,
+  startWork,
+  completeWork,
+  reopenIssue,
+  autoAssignIssue,
 } = require('../controllers/issueController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -19,6 +23,12 @@ router.get('/stats', protect, getStats);
 router.post('/check-duplicate', protect, checkDuplicate);
 router.post('/:id/support', protect, supportIssue);
 router.post('/:id/assign', protect, assignTechnician);
+
+// Worker & Lifecycle actions
+router.post('/:id/start-work', protect, startWork);
+router.post('/:id/complete-work', protect, completeWork);
+router.post('/:id/reopen', protect, reopenIssue);
+router.post('/:id/auto-assign', protect, autoAssignIssue);
 
 router.route('/')
   .post(protect, createIssue)
