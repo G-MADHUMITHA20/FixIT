@@ -1,3 +1,4 @@
+require('./config/env');
 const express = require('express');
 const cors = require('cors');
 
@@ -17,9 +18,12 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (req, res) => {
+  const { isGeminiApiKeyConfigured, getGemmaModel } = require('./config/env');
   res.json({
     success: true,
-    message: 'FixIt API is running'
+    message: 'FixIt API is running',
+    aiConfigured: isGeminiApiKeyConfigured(),
+    aiModel: getGemmaModel()
   });
 });
 

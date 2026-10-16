@@ -1,8 +1,10 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 const mongoose = require('mongoose');
 const User = require('../src/models/User');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/fixit_db';
+const MONGO_URI = process.env.MONGO_URI;
 
 const seedAdmin = async () => {
   try {

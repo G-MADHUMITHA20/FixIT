@@ -1,10 +1,12 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 const mongoose = require('mongoose');
 const User = require('../src/models/User');
 
 const seedStaff = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/fixit');
+    await mongoose.connect(process.env.MONGO_URI);
     
     // First, try to find an existing test staff account
     let staff = await User.findOne({ email: 'staff@example.com' });

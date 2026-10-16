@@ -199,9 +199,15 @@ const IssueDetails = () => {
               <div className="flex justify-between items-center" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   {issue.assignedTechnician ? (
-                    <div className="flex items-center gap-2">
-                      <Wrench size={20} color="var(--color-primary)" />
-                      <span style={{ fontSize: '1rem', fontWeight: 500 }}>Assigned to {issue.assignedTechnician.name}</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Wrench size={20} color="var(--color-primary)" />
+                        <span style={{ fontSize: '1rem', fontWeight: 500 }}>{issue.assignedTechnician.name}</span>
+                      </div>
+                      <div className="text-muted" style={{ fontSize: '0.85rem', marginLeft: '28px' }}>
+                        <div>Assigned By: Admin</div>
+                        <div>Assigned Date: {new Date(issue.assignedAt).toLocaleString()}</div>
+                      </div>
                     </div>
                   ) : (
                     <span style={{ color: 'var(--color-text-muted)' }}>Unassigned</span>
@@ -274,56 +280,91 @@ const IssueDetails = () => {
                 <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{user.role === 'admin' ? 'Admin Operations' : 'Update Status'}</h3>
               </div>
               
-              <div className="surface-card" style={{ backgroundColor: 'var(--color-background)', border: 'none' }}>
-                <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Update Status</label>
-                      <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                      </select>
-                    </div>
-                    {user.role === 'admin' && (
+              {issue.technicianCompletion && issue.status !== 'Resolved' && (
+                <div className="alert alert-info mb-4" style={{ backgroundColor: 'color-mix(in srgb, var(--color-info) 10%, var(--color-surface))', border: '1px solid var(--color-info)', color: 'var(--color-text-primary)' }}>
+                  <strong>Technician Status:</strong> Work Completed.
+                  {user.role === 'technician' ? ' Awaiting Admin confirmation.' : ' Please review and Confirm & Resolve.'}
+                </div>
+              )}
+
+              {!(user.role === 'technician' && issue.technicianCompletion) && (
+                <div className="surface-card" style={{ backgroundColor: 'var(--color-background)', border: 'none' }}>
+                  <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                       <div className="form-group" style={{ margin: 0 }}>
-                        <label className="form-label">Update Priority</label>
-                        <select className="form-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
-                          <option value="Low">Low</option>
-                          <option value="Medium">Medium</option>
-                          <option value="High">High</option>
-                          <option value="Critical">Critical</option>
+                        <label className="form-label">Update Status</label>
+                        <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          {user.role === 'admin' && <option value="Resolved">Resolved</option>}
                         </select>
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Resolution Note / Update Details (Optional)</label>
-                    <textarea 
-                      className="form-textarea" 
-                      value={note} 
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="Explain what actions were taken or why the status changed..." 
-                      rows="3" 
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-center mt-2">
-                    {user.role === 'admin' ? (
-                      <button type="button" onClick={handleDelete} className="btn btn-secondary" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
-                        <Trash2 size={16} /> Delete Issue
-                      </button>
-                    ) : (
-                      <div></div>
-                    )}
+                      {user.role === 'admin' && (
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label">Update Priority</label>
+                          <select className="form-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
                     
-                    <button type="submit" disabled={updating} className="btn btn-primary" style={{ padding: '0.6rem 2rem' }}>
-                      {updating ? 'Saving Changes...' : 'Save Updates'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Resolution Note / Update Details (Optional)</label>
+                      <textarea 
+                        className="form-textarea" 
+                        value={note} 
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Explain what actions were taken or why the status changed..." 
+                        rows="3" 
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center mt-2">
+                      {user.role === 'admin' ? (
+                        <button type="button" onClick={handleDelete} className="btn btn-secondary" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
+                          <Trash2 size={16} /> Delete Issue
+                        </button>
+                      ) : (
+                        <div></div>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        {user.role === 'technician' && !issue.technicianCompletion && (
+                          <button 
+                            type="button" 
+                            disabled={updating}
+                            onClick={async () => {
+                              setUpdating(true);
+                              try {
+                                const res = await api.put(`/issues/${id}`, { technicianCompletion: true, note });
+                                setIssue(res.data.data);
+                                setNote('');
+                                setStatus(res.data.data.status);
+                                alert('Work completed marked successfully');
+                              } catch (err) {
+                                alert(err.response?.data?.message || 'Update failed');
+                              } finally {
+                                setUpdating(false);
+                              }
+                            }}
+                            className="btn btn-success" 
+                            style={{ padding: '0.6rem 2rem', backgroundColor: 'var(--color-success)', color: 'white' }}
+                          >
+                            Work Completed
+                          </button>
+                        )}
+                        <button type="submit" disabled={updating} className="btn btn-primary" style={{ padding: '0.6rem 2rem' }}>
+                          {updating ? 'Saving...' : (user.role === 'admin' && status === 'Resolved' && issue.status !== 'Resolved' ? 'Confirm & Resolve' : 'Update Status')}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           )}
           

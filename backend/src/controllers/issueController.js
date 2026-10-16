@@ -1,6 +1,6 @@
 const MaintenanceIssue = require('../models/MaintenanceIssue');
 const IssueUpdate = require('../models/IssueUpdate');
-const { findDuplicate } = require('../utils/duplicateDetection');
+const duplicateDetection = require('../utils/duplicateDetection');
 const { evaluateSLA, evaluateSingleSLA } = require('../utils/slaService');
 
 // @desc    Create new issue
@@ -18,12 +18,19 @@ exports.createIssue = async (req, res) => {
 
     // Bypass check if explicitly requested
     if (!req.body.bypassDuplicateCheck) {
-      const duplicate = await findDuplicate(req.body.category, req.body.location, req.body.title, req.body.description);
-      if (duplicate) {
+      const duplicateResult = await duplicateDetection.findDuplicateWithDetails(
+        req.body.category,
+        req.body.location,
+        req.body.title,
+        req.body.description
+      );
+      if (duplicateResult.isDuplicate && duplicateResult.matchingIssue) {
+        const duplicate = duplicateResult.matchingIssue;
         return res.status(409).json({
           success: false,
           isDuplicate: true,
           message: 'A similar issue has already been reported.',
+          decisionData: duplicateResult.decisionData,
           existingIssue: {
             id: duplicate._id,
             title: duplicate.title,
@@ -43,7 +50,12 @@ exports.createIssue = async (req, res) => {
       data: issue,
     });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    const statusCode = error.statusCode || (error.name === 'GemmaAPIError' ? 503 : 400);
+    res.status(statusCode).json({
+      success: false,
+      message: error.message,
+      code: error.code || 'BAD_REQUEST'
+    });
   }
 };
 
@@ -173,7 +185,10 @@ exports.updateIssue = async (req, res) => {
         if (!issue.assignedTechnician || issue.assignedTechnician.toString() !== req.user.id) {
             return res.status(403).json({ success: false, message: 'Not authorized to update this issue' });
         }
-        // Technician can only update status
+        // Technician can only update status (except Resolved) and technicianCompletion
+        if (req.body.status === 'Resolved') {
+            return res.status(403).json({ success: false, message: 'Technicians cannot mark as Resolved directly. Use Work Completed.' });
+        }
         delete req.body.priority;
         delete req.body.category;
         delete req.body.location;
@@ -191,15 +206,22 @@ exports.updateIssue = async (req, res) => {
     // If status is resolved, set resolvedAt
     if (newStatus === 'Resolved' && previousStatus !== 'Resolved') {
       req.body.resolvedAt = Date.now();
+      // When resolved, we can consider technician work finished and confirmed
+      req.body.technicianCompletion = true;
     }
 
-    if (newStatus !== previousStatus || note) {
+    if (newStatus !== previousStatus || note || (req.body.technicianCompletion && !issue.technicianCompletion)) {
+      let customNote = note;
+      if (req.body.technicianCompletion && !issue.technicianCompletion) {
+        customNote = 'Technician Work Completed. Awaiting Admin Confirmation.' + (note ? `\nNote: ${note}` : '');
+      }
+
       await IssueUpdate.create({
         issueId: issue._id,
         updatedBy: req.user.id,
         previousStatus: newStatus !== previousStatus ? previousStatus : undefined,
         newStatus: newStatus !== previousStatus ? newStatus : undefined,
-        note
+        note: customNote
       });
     }
 
@@ -321,14 +343,28 @@ exports.assignTechnician = async (req, res) => {
 exports.checkDuplicate = async (req, res) => {
   try {
     const { title, description, category, location } = req.body;
-    const duplicate = await findDuplicate(category, location, title, description);
-    if (duplicate) {
-      res.status(200).json({ success: true, isDuplicate: true, matchingIssue: duplicate });
+    const result = await duplicateDetection.findDuplicateWithDetails(category, location, title, description);
+    if (result.isDuplicate) {
+      res.status(200).json({
+        success: true,
+        isDuplicate: true,
+        matchingIssue: result.matchingIssue,
+        decisionData: result.decisionData
+      });
     } else {
-      res.status(200).json({ success: true, isDuplicate: false });
+      res.status(200).json({
+        success: true,
+        isDuplicate: false,
+        decisionData: result.decisionData
+      });
     }
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    const statusCode = error.statusCode || (error.name === 'GemmaAPIError' ? 503 : 400);
+    res.status(statusCode).json({
+      success: false,
+      message: error.message,
+      code: error.code || 'BAD_REQUEST'
+    });
   }
 };
 

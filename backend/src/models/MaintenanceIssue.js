@@ -75,6 +75,10 @@ const maintenanceIssueSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    technicianCompletion: {
+      type: Boolean,
+      default: false,
+    },
     reportedAt: {
       type: Date,
       default: Date.now,

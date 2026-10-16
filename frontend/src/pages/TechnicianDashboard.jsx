@@ -34,7 +34,7 @@ const TechnicianDashboard = () => {
         <ShieldCheck size={28} color="var(--color-primary)" />
         <h2 style={{ margin: 0 }}>Technician Dashboard</h2>
       </div>
-      <p className="page-subtitle">Welcome, {user?.name}. Here are your assigned tasks.</p>
+      <p className="page-subtitle">Manage and resolve maintenance issues assigned to you.</p>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
@@ -45,9 +45,17 @@ const TechnicianDashboard = () => {
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Your Performance</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
             
+            <div className="surface-card" style={{ borderTop: '4px solid var(--color-primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Assigned Issues</h3>
+                <LayoutList size={20} color="var(--color-primary)" />
+              </div>
+              <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{issues.length}</p>
+            </div>
+
             <div className="surface-card" style={{ borderTop: '4px solid var(--color-warning)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Pending Work</h3>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Pending</h3>
                 <AlertCircle size={20} color="var(--color-warning)" />
               </div>
               <p style={{ margin: 0, fontSize: '2.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{pending}</p>
@@ -77,27 +85,33 @@ const TechnicianDashboard = () => {
           {issues.length === 0 ? (
             <div className="surface-card text-center" style={{ padding: '3rem' }}>
               <LayoutList size={48} color="var(--color-border)" style={{ margin: '0 auto 1rem auto' }} />
-              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-text-primary)' }}>No Assigned Tasks</h3>
-              <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>You have no issues assigned to you at this time.</p>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-text-primary)' }}>No Issues Assigned</h3>
+              <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>You currently have no maintenance issues assigned to you.<br/>New assignments will appear here.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {issues.map(issue => (
                 <Link to={`/issues/${issue._id}`} key={issue._id} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="surface-card interactive flex items-center justify-between" style={{ padding: '1.25rem' }}>
-                    <div className="flex flex-col gap-2">
-                      <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)', fontWeight: 600 }}>{issue.title}</h4>
-                      <div className="flex gap-3 text-muted" style={{ fontSize: '0.85rem' }}>
-                        <span>{issue.category}</span>
-                        <span>•</span>
-                        <span>{issue.location}</span>
-                        <span>•</span>
-                        <span>Assigned: {new Date(issue.assignedAt).toLocaleDateString()}</span>
+                  <div className="surface-card interactive flex flex-col gap-3" style={{ padding: '1.25rem' }}>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)', fontWeight: 600 }}>{issue.title}</h4>
+                        <p style={{ margin: '0.25rem 0 0 0', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{issue.category}</p>
+                        <p style={{ margin: '0.25rem 0 0 0', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{issue.location}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`badge badge-${issue.status.toLowerCase().replace(' ', '-')}`}>{issue.status}</span>
+                        <span className={`badge badge-${issue.priority.toLowerCase()}`}>{issue.priority} Priority</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className={`badge badge-${issue.status.toLowerCase().replace(' ', '-')}`}>{issue.status}</span>
-                      <span className={`badge badge-${issue.priority.toLowerCase()}`}>{issue.priority} Priority</span>
+                    <div className="flex gap-4 text-muted mt-2 pt-3" style={{ fontSize: '0.85rem', borderTop: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
+                      <span>Affected Users: {issue.affectedUsers}</span>
+                      {issue.slaDeadline && <span>SLA Deadline: {new Date(issue.slaDeadline).toLocaleDateString()}</span>}
+                      {issue.isEscalated && <span style={{ color: 'var(--color-danger)' }}>Escalated</span>}
+                    </div>
+                    <div className="flex justify-between text-muted" style={{ fontSize: '0.85rem' }}>
+                      <span>Assigned by Admin</span>
+                      <span>{new Date(issue.assignedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </Link>
