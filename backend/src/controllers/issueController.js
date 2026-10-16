@@ -66,8 +66,8 @@ exports.createIssue = async (req, res) => {
       rawOutput: aiResult.rawOutput,
     };
 
-    // By default, issue starts as Pending before auto-assignment
-    req.body.status = 'Pending';
+    // By default, issue starts as Pending Assignment before auto-assignment
+    req.body.status = 'Pending Assignment';
     req.body.assignmentStatus = 'unassigned';
 
     // 2. Duplicate Detection
@@ -145,9 +145,9 @@ exports.createIssue = async (req, res) => {
     // 5. Run Automatic Worker Assignment Algorithm
     const assignmentResult = await assignBestWorker(issue);
 
-    // Refetch the issue with assignment fields populated
+    // Refetch the issue with all assignment fields populated
     const populatedIssue = await MaintenanceIssue.findById(issue._id)
-      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount maxAssignments')
+      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount completedAssignmentsCount maxAssignments technicianId designation department')
       .populate('reportedBy', 'name email role');
 
     // Broadcast new issue event via SSE
@@ -219,11 +219,12 @@ exports.getIssues = async (req, res) => {
     }
     if (req.query.unassigned === 'true') {
       queryObj.assignedTechnician = null;
+      queryObj.status = { $nin: ['Work Done', 'Resolved', 'Closed'] };
     }
 
     let query = MaintenanceIssue.find(queryObj).populate(
       'assignedTechnician',
-      'name email specialization phone availabilityStatus activeAssignmentsCount maxAssignments'
+      'name email specialization phone availabilityStatus activeAssignmentsCount completedAssignmentsCount maxAssignments technicianId designation department'
     );
 
     // Sanitize reportedBy for non-admins to prevent privacy leaks
@@ -276,7 +277,7 @@ exports.getIssues = async (req, res) => {
 exports.getIssue = async (req, res) => {
   try {
     let issue = await MaintenanceIssue.findById(req.params.id)
-      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount maxAssignments')
+      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount completedAssignmentsCount maxAssignments technicianId designation department')
       .populate('reportedBy', 'name email role');
 
     if (!issue) {
@@ -397,9 +398,9 @@ exports.completeWork = async (req, res) => {
     issue.resolvedAt = now;
     await issue.save();
 
-    // Release worker workload count atomically
+    // Release worker workload count atomically & increment completed count
     if (issue.assignedTechnician) {
-      await releaseWorkerAssignment(issue.assignedTechnician);
+      await releaseWorkerAssignment(issue.assignedTechnician, true);
     }
 
     const completionNote = req.body.note || `Work completed and verified by ${req.user.name}.`;
@@ -432,7 +433,7 @@ exports.completeWork = async (req, res) => {
     });
 
     const updatedIssue = await MaintenanceIssue.findById(issue._id)
-      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount maxAssignments');
+      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount completedAssignmentsCount maxAssignments technicianId designation department');
 
     const updates = await IssueUpdate.find({ issueId: issue._id })
       .populate('updatedBy', 'name role')
@@ -674,6 +675,7 @@ exports.assignTechnician = async (req, res) => {
     issue.assignedAt = new Date();
     issue.status = 'Assigned';
     issue.assignmentStatus = previousTechnician ? 'reassigned' : 'assigned';
+    issue.assignmentFailureReason = null;
 
     await issue.save();
 
@@ -706,7 +708,7 @@ exports.assignTechnician = async (req, res) => {
     });
 
     const populatedIssue = await MaintenanceIssue.findById(issue._id)
-      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount maxAssignments');
+      .populate('assignedTechnician', 'name email specialization phone availabilityStatus activeAssignmentsCount completedAssignmentsCount maxAssignments technicianId designation department');
 
     res.status(200).json({
       success: true,

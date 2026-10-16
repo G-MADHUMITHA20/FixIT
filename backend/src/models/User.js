@@ -32,7 +32,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       sparse: true,
-      unique: true,
+    },
+    technicianId: {
+      type: String,
+      trim: true,
+      sparse: true,
     },
     specialization: {
       type: String,
@@ -40,11 +44,14 @@ const userSchema = new mongoose.Schema(
         'Electrician',
         'Plumber',
         'Carpenter',
+        'Civil/Masonry',
+        'Civil Maintenance Worker',
+        'HVAC/AC Technician',
+        'HVAC / AC Technician',
+        'Painter',
         'IT Technician',
         'Laboratory Technician',
         'Housekeeping / Cleaner',
-        'Civil Maintenance Worker',
-        'HVAC / AC Technician',
         'Electrical',
         'Plumbing',
         'Carpentry',
@@ -55,9 +62,24 @@ const userSchema = new mongoose.Schema(
       ],
       default: 'General Maintenance',
     },
+    designation: {
+      type: String,
+      default: 'Facilities Technician',
+      trim: true,
+    },
+    experienceYears: {
+      type: Number,
+      default: 2,
+      min: 0,
+    },
+    department: {
+      type: String,
+      default: 'Campus Maintenance & Facilities',
+      trim: true,
+    },
     availabilityStatus: {
       type: String,
-      enum: ['Available', 'Unavailable', 'On Leave'],
+      enum: ['Available', 'Busy', 'Unavailable', 'On Leave'],
       default: 'Available',
     },
     isAvailable: {
@@ -69,9 +91,14 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    completedAssignmentsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     maxAssignments: {
       type: Number,
-      default: 3,
+      default: 4,
       min: 1,
     },
     isActive: {
@@ -89,6 +116,21 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexes for high-performance auto-assignment queries and unique ID lookups
+userSchema.index({ role: 1, isActive: 1, availabilityStatus: 1, specialization: 1 });
+userSchema.index({ activeAssignmentsCount: 1 });
+userSchema.index({ technicianId: 1 }, { sparse: true, unique: true });
+
+// Sync technicianId and workerId on save
+userSchema.pre('save', function (next) {
+  if (this.technicianId && !this.workerId) {
+    this.workerId = this.technicianId;
+  } else if (this.workerId && !this.technicianId) {
+    this.technicianId = this.workerId;
+  }
+  if (typeof next === 'function') next();
+});
 
 // Hash password before saving
 userSchema.pre('save', async function () {

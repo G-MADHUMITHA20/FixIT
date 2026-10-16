@@ -42,10 +42,10 @@ const StudentDashboard = () => {
       setMyIssues(issues);
 
       setStats({
-        myActive: issues.filter((i) => i.status !== 'Work Done' && i.status !== 'Resolved').length,
-        myResolved: issues.filter((i) => i.status === 'Work Done' || i.status === 'Resolved').length,
+        myActive: issues.filter((i) => i.status !== 'Work Done' && i.status !== 'Resolved' && i.status !== 'Closed').length,
+        myResolved: issues.filter((i) => i.status === 'Work Done' || i.status === 'Resolved' || i.status === 'Closed').length,
         supported: publicIssues.filter((i) => i.supportedBy && i.supportedBy.includes(user.id)).length,
-        campusActive: publicIssues.filter((i) => i.status !== 'Work Done' && i.status !== 'Resolved').length,
+        campusActive: publicIssues.filter((i) => i.status !== 'Work Done' && i.status !== 'Resolved' && i.status !== 'Closed').length,
         campusTotal: publicIssues.length,
       });
     } catch (err) {
@@ -170,8 +170,8 @@ const StudentDashboard = () => {
                               <Wrench size={14} color="var(--color-primary)" /> {issue.assignedTechnician.name}
                             </span>
                           ) : (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)' }}>
-                              Awaiting Worker Assignment
+                            <span className="badge badge-warning" style={{ fontSize: '0.75rem' }}>
+                              Pending Assignment
                             </span>
                           )}
                         </td>

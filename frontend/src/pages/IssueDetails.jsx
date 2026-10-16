@@ -207,11 +207,14 @@ const IssueDetails = () => {
     return <div className="alert alert-danger" style={{ maxWidth: '800px', margin: '2rem auto' }}>{error}</div>;
   }
 
-  const timelineSteps = ['Reported', 'Assigned', 'In Progress', 'Work Done'];
+  const timelineSteps = ['Submitted', 'Pending Assignment', 'Assigned', 'In Progress', 'Resolved', 'Closed'];
   let currentStep = 0;
-  if (issue.status === 'Work Done' || issue.status === 'Resolved') currentStep = 3;
-  else if (issue.status === 'In Progress') currentStep = 2;
-  else if (issue.status === 'Assigned') currentStep = 1;
+  if (issue.status === 'Closed') currentStep = 5;
+  else if (issue.status === 'Work Done' || issue.status === 'Resolved') currentStep = 4;
+  else if (issue.status === 'In Progress') currentStep = 3;
+  else if (issue.status === 'Assigned') currentStep = 2;
+  else if (issue.status === 'Pending' || issue.status === 'Pending Assignment') currentStep = 1;
+  else currentStep = 0;
 
   const isAssignedWorker = issue.assignedTechnician && (
     issue.assignedTechnician._id === user.id ||
@@ -273,7 +276,7 @@ const IssueDetails = () => {
                   position: 'absolute',
                   top: '14px',
                   left: '10%',
-                  width: `${(currentStep / 3) * 80}%`,
+                  width: `${(currentStep / 5) * 80}%`,
                   height: '2px',
                   background: 'var(--color-primary)',
                   zIndex: 1,
@@ -413,30 +416,59 @@ const IssueDetails = () => {
           {/* Assigned Worker Details Card */}
           <div className="surface-card mb-4" style={{ backgroundColor: 'var(--color-background)', padding: '1.25rem' }}>
             <div className="flex justify-between items-center mb-2" style={{ flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-                  Assigned Maintenance Worker
+              <div style={{ flex: 1, minWidth: '280px' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>
+                  Assigned Maintenance Technician
                 </h4>
                 {issue.assignedTechnician ? (
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-1" style={{ flexWrap: 'wrap' }}>
                       <Wrench size={18} color="var(--color-primary)" />
-                      <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>{issue.assignedTechnician.name}</span>
-                      <span className="badge badge-info" style={{ fontSize: '0.75rem' }}>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>{issue.assignedTechnician.name}</span>
+                      <span className="badge badge-info" style={{ fontSize: '0.78rem' }}>
                         {issue.assignedTechnician.specialization || 'Technician'}
                       </span>
+                      {issue.assignedTechnician.technicianId && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+                          [{issue.assignedTechnician.technicianId}]
+                        </span>
+                      )}
                     </div>
-                    <div className="flex gap-3 text-muted mt-1" style={{ fontSize: '0.85rem' }}>
-                      <span className="flex items-center gap-1"><Mail size={12} /> {issue.assignedTechnician.email}</span>
+
+                    {issue.assignedTechnician.designation && (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>
+                        {issue.assignedTechnician.designation} &bull; {issue.assignedTechnician.department || 'Campus Facilities'}
+                      </div>
+                    )}
+
+                    <div className="flex gap-4 text-muted mt-2" style={{ fontSize: '0.85rem', flexWrap: 'wrap' }}>
+                      <span className="flex items-center gap-1">
+                        <Mail size={13} color="var(--color-primary)" /> {issue.assignedTechnician.email}
+                      </span>
                       {issue.assignedTechnician.phone && (
-                        <span className="flex items-center gap-1"><Phone size={12} /> {issue.assignedTechnician.phone}</span>
+                        <span className="flex items-center gap-1">
+                          <Phone size={13} color="var(--color-success)" /> {issue.assignedTechnician.phone}
+                        </span>
+                      )}
+                      {issue.assignedAt && (
+                        <span className="flex items-center gap-1 text-muted">
+                          <Clock size={13} /> Assigned: {new Date(issue.assignedAt).toLocaleString()}
+                        </span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <span style={{ color: 'var(--color-warning)', fontWeight: 600 }}>
-                    Awaiting Worker Assignment {issue.assignmentStatus === 'failed_no_worker' && '(No Available Worker with Matching Specialization)'}
-                  </span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertCircle size={18} color="var(--color-warning)" />
+                      <span style={{ color: 'var(--color-warning)', fontWeight: 600, fontSize: '1rem' }}>
+                        Pending Assignment
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+                      {issue.assignmentFailureReason || 'Dispatch queue pending. An available technician matching this specialization will be automatically assigned according to workload-balancing rules.'}
+                    </p>
+                  </div>
                 )}
               </div>
 

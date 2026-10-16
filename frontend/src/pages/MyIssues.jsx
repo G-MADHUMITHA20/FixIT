@@ -141,8 +141,8 @@ const MyIssues = () => {
                           </span>
                         </div>
                       ) : (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)', fontWeight: 500 }}>
-                          Awaiting Worker
+                        <span className="badge badge-warning" style={{ fontSize: '0.75rem' }}>
+                          Pending Assignment
                         </span>
                       )}
                     </td>

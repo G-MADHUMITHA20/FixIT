@@ -527,14 +527,23 @@ const seedTechnicians = async () => {
     for (const worker of DEMO_WORKERS_32) {
       const existing = await User.findOne({ email: worker.email });
       if (!existing) {
+        worker.technicianId = worker.technicianId || worker.workerId;
+        worker.designation = worker.designation || 'Maintenance Specialist';
+        worker.experienceYears = worker.experienceYears || 3;
+        worker.department = worker.department || 'Campus Facilities';
+        worker.completedAssignmentsCount = worker.completedAssignmentsCount || 0;
         await User.create(worker);
         createdCount++;
         console.log(`✓ [NEW] ${worker.workerId} | ${worker.name} [${worker.specialization}]`);
       } else {
         existing.workerId = worker.workerId;
+        existing.technicianId = worker.technicianId || worker.workerId;
         existing.name = worker.name;
         existing.role = 'technician';
         existing.specialization = worker.specialization;
+        existing.designation = worker.designation || existing.designation || 'Maintenance Specialist';
+        existing.experienceYears = worker.experienceYears || existing.experienceYears || 3;
+        existing.department = worker.department || existing.department || 'Campus Facilities';
         existing.availabilityStatus = worker.availabilityStatus;
         existing.isAvailable = worker.isAvailable;
         existing.maxAssignments = worker.maxAssignments;

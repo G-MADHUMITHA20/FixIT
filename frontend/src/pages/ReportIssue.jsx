@@ -4,8 +4,18 @@ import api from '../services/api';
 import { PenTool, AlertTriangle, MapPin, Tag, Flag } from 'lucide-react';
 
 const categories = [
-  'Electrical', 'Plumbing / Water Leakage', 'Furniture', 'Classroom', 
-  'Laboratory', 'Washroom', 'Network / Internet', 'Cleaning', 'Other'
+  'Electrical',
+  'Plumbing / Water Leakage',
+  'Furniture / Carpentry',
+  'HVAC / AC Maintenance',
+  'Civil / Masonry Work',
+  'Painting',
+  'Laboratory Equipment',
+  'Washroom',
+  'Network / Internet',
+  'Cleaning / Housekeeping',
+  'General Maintenance',
+  'Other',
 ];
 
 const ReportIssue = () => {

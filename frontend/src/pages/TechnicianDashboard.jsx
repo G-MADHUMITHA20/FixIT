@@ -13,6 +13,8 @@ import {
   Tag,
   Briefcase,
   AlertTriangle,
+  MessageSquare,
+  X,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
@@ -24,6 +26,10 @@ const TechnicianDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
   const [statusFilter, setStatusFilter] = useState('active'); // 'active', 'all', 'in-progress', 'completed'
+
+  // Modal states for progress note and resolve details
+  const [activeModal, setActiveModal] = useState(null); // { type: 'note' | 'resolve', issueId: string, title: string }
+  const [modalText, setModalText] = useState('');
 
   const fetchIssues = useCallback(async () => {
     try {
@@ -67,7 +73,7 @@ const TechnicianDashboard = () => {
     setActionLoading((prev) => ({ ...prev, [issueId]: 'starting' }));
     try {
       await api.post(`/issues/${issueId}/start-work`, {
-        note: `Work commenced on site.`,
+        note: `Work commenced on site by ${user?.name}.`,
       });
       await fetchIssues();
     } catch (err) {
@@ -77,44 +83,80 @@ const TechnicianDashboard = () => {
     }
   };
 
-  const handleCompleteWork = async (e, issueId) => {
+  const openResolveModal = (e, issue) => {
     e.preventDefault();
     e.stopPropagation();
-    const note = prompt('Optional: Add a brief completion note for the student/staff:', 'Issue resolved and verified.');
-    if (note === null) return; // user cancelled
+    setActiveModal({
+      type: 'resolve',
+      issueId: issue._id,
+      title: issue.title,
+    });
+    setModalText('Maintenance completed, tested, and confirmed functional.');
+  };
 
-    setActionLoading((prev) => ({ ...prev, [issueId]: 'completing' }));
+  const openNoteModal = (e, issue) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveModal({
+      type: 'note',
+      issueId: issue._id,
+      title: issue.title,
+    });
+    setModalText('');
+  };
+
+  const handleModalSubmit = async (e) => {
+    e.preventDefault();
+    if (!activeModal) return;
+
+    const { type, issueId } = activeModal;
+    setActionLoading((prev) => ({ ...prev, [issueId]: type }));
+
     try {
-      await api.post(`/issues/${issueId}/complete-work`, { note });
+      if (type === 'resolve') {
+        await api.post(`/issues/${issueId}/complete-work`, {
+          note: modalText || 'Work completed and verified.',
+        });
+      } else if (type === 'note') {
+        await api.put(`/issues/${issueId}`, {
+          note: modalText || 'Work progress recorded by technician.',
+        });
+      }
+      setActiveModal(null);
       await fetchIssues();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to mark work as done');
+      alert(err.response?.data?.message || 'Operation failed');
     } finally {
       setActionLoading((prev) => ({ ...prev, [issueId]: null }));
     }
   };
 
-  const assignedCount = issues.filter((i) => i.status === 'Assigned' || i.status === 'Pending').length;
+  const assignedCount = issues.filter((i) => i.status === 'Assigned' || i.status === 'Pending' || i.status === 'Pending Assignment').length;
   const inProgressCount = issues.filter((i) => i.status === 'In Progress').length;
-  const completedCount = issues.filter((i) => i.status === 'Work Done' || i.status === 'Resolved').length;
+  const completedCount = issues.filter((i) => i.status === 'Work Done' || i.status === 'Resolved' || i.status === 'Closed').length;
 
   const filteredIssues = issues.filter((issue) => {
     if (statusFilter === 'active') {
-      return issue.status === 'Assigned' || issue.status === 'In Progress' || issue.status === 'Pending';
+      return issue.status === 'Assigned' || issue.status === 'In Progress' || issue.status === 'Pending' || issue.status === 'Pending Assignment';
     }
     if (statusFilter === 'in-progress') return issue.status === 'In Progress';
-    if (statusFilter === 'completed') return issue.status === 'Work Done' || issue.status === 'Resolved';
+    if (statusFilter === 'completed') return issue.status === 'Work Done' || issue.status === 'Resolved' || issue.status === 'Closed';
     return true;
   });
 
   return (
     <>
-      <div className="page-title flex items-center justify-between">
+      <div className="page-title flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
         <div className="flex items-center gap-2">
           <ShieldCheck size={28} color="var(--color-primary)" />
-          <h2 style={{ margin: 0 }}>Worker Task Dashboard</h2>
+          <div>
+            <h2 style={{ margin: 0 }}>Technician Work Order Portal</h2>
+            <p className="page-subtitle" style={{ margin: 0 }}>
+              Welcome back, {user?.name}. Manage your assigned work orders and report resolution progress.
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
           <span className="badge badge-info" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
             <Briefcase size={14} style={{ display: 'inline', marginRight: '4px' }} />
             Specialization: {user?.specialization || 'General Maintenance'}
@@ -124,7 +166,78 @@ const TechnicianDashboard = () => {
           </span>
         </div>
       </div>
-      <p className="page-subtitle">Welcome, {user?.name}. Manage and resolve your real-time campus maintenance assignments.</p>
+
+      {/* Progress & Resolve Modal Dialog */}
+      {activeModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            className="surface-card"
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              padding: '1.5rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
+                {activeModal.type === 'resolve' ? 'Mark Complaint as Resolved' : 'Add Progress / Site Note'}
+              </h3>
+              <button
+                onClick={() => setActiveModal(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.88rem', color: 'var(--color-text-secondary)' }}>
+              Ticket: <strong>{activeModal.title}</strong>
+            </p>
+
+            <form onSubmit={handleModalSubmit}>
+              <div className="form-group mb-3">
+                <label className="form-label">
+                  {activeModal.type === 'resolve' ? 'Resolution & Completion Details *' : 'Progress Note Details *'}
+                </label>
+                <textarea
+                  className="form-textarea"
+                  rows="4"
+                  required
+                  placeholder={activeModal.type === 'resolve' ? 'Describe the corrective action taken, parts replaced, and verification...' : 'Log parts on order, inspection results, or scheduled work times...'}
+                  value={modalText}
+                  onChange={(e) => setModalText(e.target.value)}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setActiveModal(null)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading[activeModal.issueId]}
+                  className={`btn ${activeModal.type === 'resolve' ? 'btn-success' : 'btn-primary'}`}
+                  style={activeModal.type === 'resolve' ? { backgroundColor: 'var(--color-success)', color: '#fff' } : {}}
+                >
+                  {actionLoading[activeModal.issueId] ? 'Saving...' : activeModal.type === 'resolve' ? 'Submit Resolution' : 'Save Progress Note'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
@@ -181,7 +294,7 @@ const TechnicianDashboard = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                 <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                  Work Done
+                  Completed History
                 </h3>
                 <CheckCircle size={20} color="var(--color-success)" />
               </div>
@@ -190,7 +303,7 @@ const TechnicianDashboard = () => {
           </div>
 
           {/* Filter Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <h3 style={{ fontSize: '1.15rem', margin: 0, color: 'var(--color-text-primary)' }}>
               Assigned Work Orders ({filteredIssues.length})
             </h3>
@@ -200,28 +313,28 @@ const TechnicianDashboard = () => {
                 style={{ fontSize: '0.85rem', padding: '0.35rem 0.8rem' }}
                 onClick={() => setStatusFilter('active')}
               >
-                Active Tasks
+                Active Tasks ({assignedCount + inProgressCount})
               </button>
               <button
                 className={`btn ${statusFilter === 'in-progress' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ fontSize: '0.85rem', padding: '0.35rem 0.8rem' }}
                 onClick={() => setStatusFilter('in-progress')}
               >
-                In Progress
+                In Progress ({inProgressCount})
               </button>
               <button
                 className={`btn ${statusFilter === 'completed' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ fontSize: '0.85rem', padding: '0.35rem 0.8rem' }}
                 onClick={() => setStatusFilter('completed')}
               >
-                Completed
+                Completed ({completedCount})
               </button>
               <button
                 className={`btn ${statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ fontSize: '0.85rem', padding: '0.35rem 0.8rem' }}
                 onClick={() => setStatusFilter('all')}
               >
-                All
+                All ({issues.length})
               </button>
             </div>
           </div>
@@ -241,9 +354,9 @@ const TechnicianDashboard = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {filteredIssues.map((issue) => {
                 const isSafety = issue.isSafetyHazard || issue.priority === 'Critical';
-                const isWorkDone = issue.status === 'Work Done' || issue.status === 'Resolved';
+                const isWorkDone = issue.status === 'Work Done' || issue.status === 'Resolved' || issue.status === 'Closed';
                 const isInProgress = issue.status === 'In Progress';
-                const isAssigned = issue.status === 'Assigned' || issue.status === 'Pending';
+                const isAssigned = issue.status === 'Assigned' || issue.status === 'Pending' || issue.status === 'Pending Assignment';
 
                 return (
                   <div
@@ -305,7 +418,7 @@ const TechnicianDashboard = () => {
                           </span>
                           {issue.completedAt && (
                             <span className="flex items-center gap-1" style={{ color: 'var(--color-success)', fontWeight: 600 }}>
-                              <CheckCircle size={14} /> Done: {new Date(issue.completedAt).toLocaleString()}
+                              <CheckCircle size={14} /> Resolved: {new Date(issue.completedAt).toLocaleString()}
                             </span>
                           )}
                         </div>
@@ -326,27 +439,37 @@ const TechnicianDashboard = () => {
                         )}
 
                         {isInProgress && (
-                          <button
-                            onClick={(e) => handleCompleteWork(e, issue._id)}
-                            disabled={actionLoading[issue._id] === 'completing'}
-                            className="btn flex items-center gap-2"
-                            style={{
-                              width: '100%',
-                              justifyContent: 'center',
-                              padding: '0.6rem 1.25rem',
-                              backgroundColor: 'var(--color-success)',
-                              color: '#ffffff',
-                              border: 'none',
-                            }}
-                          >
-                            <CheckSquare size={16} />
-                            {actionLoading[issue._id] === 'completing' ? 'Saving...' : 'Mark as Work Done'}
-                          </button>
+                          <>
+                            <button
+                              onClick={(e) => openResolveModal(e, issue)}
+                              disabled={actionLoading[issue._id] === 'resolve'}
+                              className="btn flex items-center gap-2"
+                              style={{
+                                width: '100%',
+                                justifyContent: 'center',
+                                padding: '0.6rem 1.25rem',
+                                backgroundColor: 'var(--color-success)',
+                                color: '#ffffff',
+                                border: 'none',
+                              }}
+                            >
+                              <CheckSquare size={16} />
+                              {actionLoading[issue._id] === 'resolve' ? 'Saving...' : 'Mark as Resolved'}
+                            </button>
+
+                            <button
+                              onClick={(e) => openNoteModal(e, issue)}
+                              className="btn btn-secondary flex items-center gap-1"
+                              style={{ width: '100%', justifyContent: 'center', fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}
+                            >
+                              <MessageSquare size={14} /> Add Progress Note
+                            </button>
+                          </>
                         )}
 
                         {isWorkDone && (
                           <div className="flex items-center gap-1" style={{ color: 'var(--color-success)', fontWeight: 600, fontSize: '0.9rem', padding: '0.4rem 0' }}>
-                            <CheckCircle size={18} /> Completed
+                            <CheckCircle size={18} /> Completed &amp; Verified
                           </div>
                         )}
 

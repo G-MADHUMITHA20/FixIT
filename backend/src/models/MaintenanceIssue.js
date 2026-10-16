@@ -18,22 +18,31 @@ const maintenanceIssueSchema = new mongoose.Schema(
         'Electrician',
         'Plumber',
         'Carpenter',
+        'Civil/Masonry',
+        'Civil Maintenance Worker',
+        'Civil / Masonry Work',
+        'HVAC / AC Technician',
+        'HVAC/AC Technician',
+        'HVAC / AC Maintenance',
+        'Painter',
+        'Painting',
         'IT Technician',
         'Laboratory Technician',
+        'Laboratory Equipment',
         'Housekeeping / Cleaner',
-        'Civil Maintenance Worker',
-        'HVAC / AC Technician',
         'Electrical',
         'Plumbing / Water Leakage',
         'Plumbing',
         'Furniture',
         'Carpentry',
+        'Furniture / Carpentry',
         'Classroom',
         'Laboratory',
         'Washroom',
         'Network / Internet',
         'IT',
         'Cleaning',
+        'Cleaning / Housekeeping',
         'General Maintenance',
         'Other',
       ],
@@ -49,8 +58,8 @@ const maintenanceIssueSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Assigned', 'In Progress', 'Work Done', 'Resolved', 'Reopened'],
-      default: 'Pending',
+      enum: ['Submitted', 'Pending', 'Pending Assignment', 'Assigned', 'In Progress', 'Work Done', 'Resolved', 'Closed', 'Reopened'],
+      default: 'Pending Assignment',
     },
     reportedBy: {
       type: mongoose.Schema.ObjectId,
@@ -86,6 +95,10 @@ const maintenanceIssueSchema = new mongoose.Schema(
       type: String,
       enum: ['unassigned', 'assigned', 'failed_no_worker', 'reassigned'],
       default: 'unassigned',
+    },
+    assignmentFailureReason: {
+      type: String,
+      default: null,
     },
     assignedAt: {
       type: Date,
@@ -163,5 +176,10 @@ maintenanceIssueSchema.pre('save', function () {
     this.slaDeadline = new Date(new Date(baseDate).getTime() + hours * 60 * 60 * 1000);
   }
 });
+
+// Indexes for query optimization & high-throughput auto-assignment
+maintenanceIssueSchema.index({ status: 1, assignedTechnician: 1 });
+maintenanceIssueSchema.index({ category: 1, location: 1 });
+maintenanceIssueSchema.index({ reportedBy: 1, createdAt: -1 });
 
 module.exports = mongoose.model('MaintenanceIssue', maintenanceIssueSchema);
