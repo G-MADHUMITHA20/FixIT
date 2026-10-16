@@ -100,6 +100,26 @@ const ReportIssue = () => {
           </div>
         ) : (
           <form onSubmit={(e) => handleSubmit(e, false)}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.85rem 1rem',
+                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1.5rem',
+                fontSize: '0.88rem',
+                color: 'var(--color-text-primary)',
+              }}
+            >
+              <span style={{ fontSize: '1.25rem' }}>✨</span>
+              <div>
+                <strong>Gemma 4 Intelligent Dispatch:</strong> Simply write your complaint in natural language. FixIt AI classifies the issue, analyzes campus worker availability & workloads, and automatically dispatches the best technician.
+              </div>
+            </div>
+
             <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>Issue Details</h3>
             
             <div className="form-group">

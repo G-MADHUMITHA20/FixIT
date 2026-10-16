@@ -8,7 +8,7 @@ const categories = [
   'All Categories', 'Electrical', 'Plumbing / Water Leakage', 'Furniture', 'Classroom', 
   'Laboratory', 'Washroom', 'Network / Internet', 'Cleaning', 'Other'
 ];
-const statuses = ['All Statuses', 'Pending', 'In Progress', 'Resolved'];
+const statuses = ['All Statuses', 'Pending', 'Assigned', 'In Progress', 'Work Done', 'Resolved'];
 const priorities = ['All Priorities', 'Low', 'Medium', 'High', 'Critical'];
 const sortOptions = [
   { label: 'Newest', value: 'newest' },
@@ -142,11 +142,18 @@ const PublicIssues = () => {
             ) : 
               issues.map(issue => {
                 const hasSupported = issue.supportedBy && issue.supportedBy.includes(user?._id || user?.id);
-                const isResolved = issue.status === 'Resolved';
-                
+                const isResolved = issue.status === 'Resolved' || issue.status === 'Work Done';
+                const borderColor = isResolved
+                  ? 'var(--color-success)'
+                  : issue.status === 'In Progress'
+                  ? 'var(--color-info)'
+                  : issue.status === 'Assigned'
+                  ? 'var(--color-primary)'
+                  : 'var(--color-warning)';
+
                 return (
                   <Link to={`/issues/${issue._id}`} key={issue._id} style={{ textDecoration: 'none', display: 'block' }}>
-                    <div className="surface-card interactive" style={{ padding: '1.25rem 1.5rem', borderLeft: `4px solid ${isResolved ? 'var(--color-success)' : issue.status === 'In Progress' ? 'var(--color-info)' : 'var(--color-warning)'}` }}>
+                    <div className="surface-card interactive" style={{ padding: '1.25rem 1.5rem', borderLeft: `4px solid ${borderColor}` }}>
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-2">
                           <h3 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '1.1rem', fontWeight: 600 }}>{issue.title}</h3>
@@ -155,8 +162,13 @@ const PublicIssues = () => {
                               {issue.reporterType === 'staff' ? 'Staff' : 'Student'}
                             </span>
                           )}
+                          {issue.assignedTechnician && (
+                            <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
+                              Assigned: {issue.assignedTechnician.name || issue.assignedWorkerName}
+                            </span>
+                          )}
                         </div>
-                        <span className={`badge badge-${issue.status.toLowerCase().replace(' ', '-')}`}>{issue.status}</span>
+                        <span className={`badge badge-${issue.status.toLowerCase().replace(/\s+/g, '-')}`}>{issue.status}</span>
                       </div>
                       
                       <div style={{ display: 'flex', gap: '1.5rem', margin: '0.75rem 0', flexWrap: 'wrap' }}>

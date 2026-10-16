@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node src/server.js",
-    "test": "node --test tests/**/*.test.js"
+    "test": "node test/system_test.js",
+    "test:unit": "node --test tests/**/*.test.js",
+    "seed:workers": "node scripts/seedTechnicians.js"
   },
   "keywords": [],
   "author": "",

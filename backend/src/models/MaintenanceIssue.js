@@ -15,14 +15,26 @@ const maintenanceIssueSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please provide a category'],
       enum: [
+        'Electrician',
+        'Plumber',
+        'Carpenter',
+        'IT Technician',
+        'Laboratory Technician',
+        'Housekeeping / Cleaner',
+        'Civil Maintenance Worker',
+        'HVAC / AC Technician',
         'Electrical',
         'Plumbing / Water Leakage',
+        'Plumbing',
         'Furniture',
+        'Carpentry',
         'Classroom',
         'Laboratory',
         'Washroom',
         'Network / Internet',
+        'IT',
         'Cleaning',
+        'General Maintenance',
         'Other',
       ],
     },
@@ -37,7 +49,7 @@ const maintenanceIssueSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'In Progress', 'Resolved'],
+      enum: ['Pending', 'Assigned', 'In Progress', 'Work Done', 'Resolved', 'Reopened'],
       default: 'Pending',
     },
     reportedBy: {
@@ -66,6 +78,15 @@ const maintenanceIssueSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    assignedWorkerName: {
+      type: String,
+      default: null,
+    },
+    assignmentStatus: {
+      type: String,
+      enum: ['unassigned', 'assigned', 'failed_no_worker', 'reassigned'],
+      default: 'unassigned',
+    },
     assignedAt: {
       type: Date,
       default: null,
@@ -78,6 +99,14 @@ const maintenanceIssueSchema = new mongoose.Schema(
     technicianCompletion: {
       type: Boolean,
       default: false,
+    },
+    startedAt: {
+      type: Date,
+      default: null,
+    },
+    completedAt: {
+      type: Date,
+      default: null,
     },
     reportedAt: {
       type: Date,
@@ -99,6 +128,25 @@ const maintenanceIssueSchema = new mongoose.Schema(
     },
     escalatedAt: {
       type: Date,
+    },
+    isSafetyHazard: {
+      type: Boolean,
+      default: false,
+    },
+    safetyHazardReason: {
+      type: String,
+      default: '',
+    },
+    aiClassification: {
+      predictedCategory: { type: String },
+      issueSummary: { type: String },
+      urgency: { type: String },
+      locationExtracted: { type: String },
+      isDangerous: { type: Boolean, default: false },
+      dangerReason: { type: String, default: '' },
+      usedFallback: { type: Boolean, default: false },
+      classifiedAt: { type: Date },
+      rawOutput: { type: mongoose.Schema.Types.Mixed },
     },
   },
   { timestamps: true }
