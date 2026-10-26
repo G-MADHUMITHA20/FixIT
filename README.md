@@ -244,7 +244,7 @@ FixIt/
 
 ### 1. Clone the Repository
 ```
-git clone https://github.com/YOUR-USERNAME/FixIt.git
+git clone https://github.com/G-MADHUMITHA20/FixIT
 cd FixIt
 ```
 
@@ -284,6 +284,7 @@ Configure the following values in the appropriate environment files, using the v
 PORT=5000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_long_random_secret
+GEMMA_MODEL=enter the model
 GOOGLE_API_KEY=your_google_api_key
 ```
 
